@@ -1,0 +1,34 @@
+<!-- 
+
+     install.xml            SCT package documentation
+                                                                   Steve Linton
+                                                                Max Neunhoeffer
+                                                                 Richard Parker
+                                                             Colva Roney-Dougal
+
+         Copyright (C) 2010 by the authors
+
+This is the chapter of the documentation describing the installation.
+
+-->
+
+<Chapter Label="install">
+<Heading>Installation of the <Package>SCT</Package>-Package</Heading>
+<Index><Package>SCT</Package></Index>
+
+To install this  package just extract the package's  archive file to
+the  GAP  <F>pkg</F>  directory.<P/>
+
+By default the <Package>SCT</Package> package is not automatically
+loaded by &GAP; when it is installed. You must load the package with
+<C>LoadPackage("SCT");</C> before its functions become available.<P/>
+
+Please, send us an e-mail if you have any questions, remarks,
+suggestions, etc. concerning this package. Also, we would like to hear
+about applications of this package.<P/>
+
+Steve Linton, Max Neunhöffer, Richard Parker and Colva Roney-Dougal<P/>
+
+<!-- ############################################################ -->
+
+</Chapter>

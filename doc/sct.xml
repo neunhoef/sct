@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE Book SYSTEM "gapdoc.dtd">
+
+<!--
+
+      sct.xml          SCT package documentation
+                                                                   Steve Linton
+                                                                Max Neunhoeffer
+                                                                 Richard Parker
+                                                             Colva Roney-Dougal
+
+         Copyright (C) 2010 by the authors
+
+-->
+
+<Book Name="SCT">
+
+<TitlePage>
+    <Title>GAP 4 Package <Package>SCT</Package></Title>
+    <Subtitle>Small Cancellation Theory</Subtitle>
+    <Version>
+      <#Include SYSTEM "../VERSION">
+    </Version>
+
+<Author>Steve Linton
+</Author>
+<Author>Max Neunhöffer
+<Address>
+School of Mathematics and Statistics
+Mathematical Institute
+University of St Andrews
+North Haugh
+St Andrews, Fife KY16 9SS
+Scotland, UK
+</Address>
+<Email>neunhoef@mcs.st-and.ac.uk</Email>
+<Homepage>http://www-groups.mcs.st-and.ac.uk/&tilde;neunhoef</Homepage>
+</Author>
+<Author>Richard Parker
+</Author>
+<Author>Colva Roney-Dougal
+<Address>
+School of Mathematics and Statistics
+Mathematical Institute
+University of St Andrews
+North Haugh
+St Andrews, Fife KY16 9SS
+Scotland, UK
+</Address>
+<Email>colva@mcs.st-and.ac.uk</Email>
+<Homepage>http://www-groups.mcs.st-and.ac.uk/&tilde;colva</Homepage>
+</Author>
+<Date>July 2010</Date>
+
+<Copyright>
+  &copyright; 2010 by the authors<P/>
+
+  This package may be distributed under the terms and conditions of the
+  GNU Public License Version 2 or higher.
+</Copyright>
+
+</TitlePage>
+
+<!--  TableOfContents  . . . . . .  generate a table of contents   -->
+<TableOfContents/>
+
+<!--  The only chapter of the book  --> 
+<Body>
+<#Include SYSTEM "intro.xml">
+<#Include SYSTEM "install.xml">
+<#Include SYSTEM "examples.xml">
+</Body>
+
+<Bibliography Databases="sct"/>
+
+<!--  And finally an index as well   -->
+<TheIndex/>
+
+</Book>
+
