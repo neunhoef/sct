@@ -18,6 +18,7 @@
 DeclareInfoClass( "SCT" );
 SetInfoLevel( SCT, 2 );
 
+
 # The constructor:
 DeclareGlobalFunction( "MakeInverseTableGroup" );
 
@@ -36,28 +37,51 @@ DeclareRepresentation( "IsInvTabGroupRep", IsInvTabGroup,
 
 InvTabGroupType := NewType(InvTabGroupFamily, IsInvTabGroupRep);
 
-DeclareFilter( "HasNotchTypes", IsInvTabGroupRep );
-
 
 # Attributes for inv tab groups:
 
-DeclareAttribute( "InverseTable", [IsInvTabGroup] );
-DeclareAttribute( "GeneratorNames", [IsInvTabGroup] );
-DeclareAttribute( "NotchTypes", [IsInvTabGroup] );
-
+DeclareAttribute( "InverseTable", IsInvTabGroup );
+DeclareAttribute( "GeneratorNames", IsInvTabGroup );
+DeclareAttribute( "Relators", IsInvTabGroup );
+DeclareAttribute( "PowersOfRelators", IsInvTabGroup );
+DeclareAttribute( "CircleDegrees", IsInvTabGroup );
+DeclareAttribute( "NotchTypes", IsInvTabGroup );
+DeclareAttribute( "NotchTypeIndex", IsInvTabGroup );
+DeclareAttribute( "NotchTypeDegrees", IsInvTabGroup );
+DeclareAttribute( "Edges", IsInvTabGroup );
+DeclareAttribute( "EdgeIndex", IsInvTabGroup );
 
 # The operations:
 
 DeclareOperation( "NameWord", [IsInvTabGroupRep, IsList] );
 DeclareOperation( "WordName", [IsInvTabGroupRep, IsList] );
+
+DeclareOperation( "RotateWord", [IsList, IsPosInt] );
+# This always makes a copy even if the position is 1 for no rotate!
+
 DeclareOperation( "ReduceWord", [IsInvTabGroupRep, IsList, IsBool] );
 DeclareOperation( "ReduceWord", [IsInvTabGroupRep, IsList] );
+# The third argument says whether or not cyclic reduction is done
+# By default it is false.
+
 DeclareOperation( "ProductWords", [IsInvTabGroupRep, IsList, IsList] );
+# This is simple concatenation followed by (non-cyclically) reduction
+
 DeclareOperation( "InverseWord", [IsInvTabGroupRep, IsList] );
+
 DeclareOperation( "PowerOfWord", [IsInvTabGroupRep, IsList, IsPosInt] );
+# Called with power 1 this does not copy!
+# It is assumed that the word given is (non-cyclically) reduced.
+
 DeclareOperation( "NecklaceReduce", [IsInvTabGroupRep, IsList] );
+# Finds the lexicographically smallest among the rotations and inversions.
+
 DeclareOperation( "RotationReduce", [IsInvTabGroupRep, IsList] );
-DeclareOperation( "RotateWord", [IsList, IsPosInt] );
-DeclareOperation( "FindLongestCancellation", [IsInvTabGroupRep, IsList] );
+# Finds the lexicographically smallest rotation.
+
+DeclareGlobalFunction( "CountCommonPrefix" );
+# Finds the length of the longest common prefix of two words.
+
+# DeclareOperation( "FindLongestCancellation", [IsInvTabGroupRep, IsList] );
 
 

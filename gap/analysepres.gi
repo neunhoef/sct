@@ -28,9 +28,9 @@ InstallMethod( ViewObj, "for an InvTabGroup",
   [ IsInvTabGroupRep ],
   function( g )
     local names;
-    names := GeneratorsNames(g);
+    names := GeneratorNames(g);
     if Length(names) <= 10 then
-      Print("<InverseTableGroup with gens=",GeneratorsNames(g),">");
+      Print("<InverseTableGroup with gens=",GeneratorNames(g),">");
     else
       Print("<InverseTableGroup with ",Length(names)," generators>");
     fi;
@@ -105,6 +105,7 @@ InstallMethod( PowerOfWord, "for an InvTabGroup, a word and a positive exp",
   [ IsInvTabGroupRep, IsList, IsPosInt ],
   function(g,w,p)
     local i,v;
+    # FIXME: this should be improved by determining the cancellation only once!
     if p = 1 then return w; fi;
     v := ShallowCopy(w);
     for i in [2..p] do
@@ -180,6 +181,24 @@ InstallMethod( RotationReduce, "for an InvTabGroup and a word",
     od;
     return RotateWord(w,minrot);
   end );
+
+InstallGlobalFunction( CountCommonPrefix, function(w1,w2)
+  local i;
+  i := 1;
+  while i <= Length(w1) and i <= Length(w2) and w1[i] = w2[i] do
+      i := i + 1;
+  od;
+  return i-1;
+end );
+
+
+
+
+
+
+###########################################################################
+# The following serves as a graveyard from which we dig up useful things:
+###########################################################################
 
 Gear1 := function( g, rels )
     local A,B,C,R,fil,i,j,k,l,n,notch,nredl,pos,prefix,r,ri,stable,w,where;
@@ -275,17 +294,7 @@ Gear1 := function( g, rels )
                 notch := notch );
   end;
 
-CountCommonPrefix := function(w1,w2)
-  local i;
-  i := 1;
-  while i <= Length(w1) and i <= Length(w2) and w1[i] = w2[i] do
-      i := i + 1;
-  od;
-  return i-1;
-end;
-
-InstallMethod( FindLongestCancellation, "for an invtab group and a rel list",
-  [ IsInvTabGroupRep, IsList ],
+FindLongestCancellation :=
   function( g, rels )
     local R,cur,curstart,i,j,lcancel,notch,notchindex,pos,pos1,pre1,pre2,
           relnr,res,startindex,w;
@@ -391,7 +400,7 @@ InstallMethod( FindLongestCancellation, "for an invtab group and a rel list",
     g![8] := lcancel;
     SetFilterObj(g,HasNotchTypes);
     return res;
-  end );
+  end;
 
 # Plan:
 #
