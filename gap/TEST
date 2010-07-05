@@ -1,0 +1,14 @@
+LoadPackage("sct");
+SetInfoLevel(SCT,3);
+g := MakeInverseTableGroup([2,1,3],"RST");
+DefineRelators(g,[WordName(g,"RRR"), WordName(g,"SSS"), 
+                  WordName(g,"STSTSTSTSTSTST")]);
+Relators(g);
+PowersOfRelators(g);
+CircleDegrees(g);
+NotchTypes(g);
+RelatorNumbersNotchTypes(g);
+DegreesNotchTypes(g);
+PrevNextOfInverses(g);
+CheckMetricSmallCancellationCondition(g);
+
