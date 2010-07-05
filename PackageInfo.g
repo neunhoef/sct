@@ -59,7 +59,7 @@ Persons := [
     FirstNames    := "Richard",
     IsAuthor      := true,
     IsMaintainer  := false,
-    Email         := "richardp45@hotmail.com???",
+    Email         := "richpark54@hotmail.co.uk",
     Place         := "Cambridge",
   ),
   rec( 
