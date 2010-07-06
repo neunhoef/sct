@@ -118,7 +118,7 @@ InstallMethod( PowerOfWord, "for an InvTabGroup, a word and a positive exp",
     od;
     return v;
   end );
-    
+
 InstallGlobalFunction( CompareRotation,
   function( v, a, w, b )
     # v and w two (can be the same) words of equal length.
@@ -195,6 +195,10 @@ InstallMethod( DefineRelators, "for an inv tab group and a list of rels",
         return fail;
     fi;
     Info( SCT, 2, "Analysing individual relators..." );
+    # Convenience transformation:
+    if IsStringRep(rels[1]) and IsStringRep(GeneratorNames(g)) then
+        rels := List(rels,x->WordName(g,x));
+    fi;
     # First analyse each individual relator:
     newrels := EmptyPlist(Length(rels));
     powers := EmptyPlist(Length(rels));
@@ -246,6 +250,8 @@ InstallMethod( DefineRelators, "for an inv tab group and a list of rels",
     SetPowersOfRelators(g,powers);
 
     Info( SCT, 2, "Have ",Length(newrels)," relators." );
+
+    return true;
   end );
 
 InstallMethod( CircleDegrees, "for an inverse table group without relators",
@@ -257,8 +263,15 @@ InstallMethod( CircleDegrees, "for an inverse table group without relators",
 InstallMethod( CircleDegrees, "for an inverse table group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function(g)
-    local c;
+    local c,i,l,rels;
     c := Lcm(360,Lcm(PowersOfRelators(g)));
+    rels := Relators(g);
+    for i in [1..Length(rels)] do
+        l := Length(rels[i]);
+        if l > c then
+            c := c * (QuoInt(l+c-1,c));
+        fi;
+    od;
     Info( SCT, 2, "Circle contains ",c," degrees.");
     return c;
   end );
@@ -272,7 +285,7 @@ InstallMethod( NotchTypes, "for an invtab group without relators",
 InstallMethod( NotchTypes, "for an inverse table group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function(g)
-    local i,j,l,notch,p,powers,r,relnr,rels;
+    local i,j,l,notch,p,perm,powers,r,relnr,rels,rotnr;
 
     rels := Relators(g);
     powers := PowersOfRelators(g);
@@ -282,24 +295,30 @@ InstallMethod( NotchTypes, "for an inverse table group with relators",
     l := Sum(powers);
     notch := EmptyPlist(l);
     relnr := EmptyPlist(l);
+    rotnr := EmptyPlist(l);
     for i in [1..Length(rels)] do
         r := rels[i];
         p := powers[i];
-        for j in [1..Length(r)/p] do 
+        for j in [1..Length(r)/p] do
             Add(notch,RotateWord(r,j));
             Add(relnr,i);
+            Add(rotnr,j);
         od;
     od;
     # Sort them lexicographically:
     Info( SCT, 2, "Sorting notch types lexicographically..." );
-    SortParallel(notch,relnr);
+    perm := Sortex(notch);
+    relnr := Permuted(relnr,perm);
+    rotnr := Permuted(rotnr,perm);
 
     # Make it immutable:
     MakeImmutable(notch);
     MakeImmutable(relnr);
+    MakeImmutable(rotnr);
 
     Info( SCT, 2, "Have ",Length(notch)," notch types.");
     SetRelatorNumbersNotchTypes(g,relnr);
+    SetRotationsOfRelators(g,rotnr);
 
     return notch;
   end );
@@ -317,6 +336,41 @@ InstallMethod( RelatorNumbersNotchTypes, "for an invtab group with relators",
     return g!.RelatorNumbersNotchTypes;
   end );
 
+InstallMethod( RotationsOfRelators, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function( g )
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( RotationsOfRelators, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function( g )
+    NotchTypes(g);
+    return g!.RotationsOfRelators;
+  end );
+
+InstallMethod( NotchIndex, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function( g )
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( NotchIndex, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function( g )
+    local hf,hlen,ht,i,notch;
+    notch := NotchTypes(g);
+    Info( SCT, 2, "Generating notch index..." );
+    hlen := NextPrimeInt(Length(notch));
+    hf := MakeHashFunctionForPlainFlatList(hlen);
+    ht := HTCreate([1,2,3],rec( treehashsize := hlen, hf := hf.func,
+                                hfd := hf.data ));
+    for i in [1..Length(notch)] do
+        HTAdd(ht,notch[i],i);
+    od;
+    return ht;
+  end );
+
 InstallMethod( DegreesNotchTypes, "for an invtab group without relators",
   [ IsInvTabGroupRep ],
   function( g )
@@ -326,31 +380,39 @@ InstallMethod( DegreesNotchTypes, "for an invtab group without relators",
 InstallMethod( DegreesNotchTypes, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
-    local circle,d,degs,i,j,l,n,notch,p,powers,r,relnr,v,vals,vals2;
+    local circle,d,degs,degsnotch,i,j,k,l,n,notch,p,powers,r,relnr,rels,
+          rotnr,v,vals;
+    rels := Relators(g);
     notch := NotchTypes(g);
     relnr := RelatorNumbersNotchTypes(g);
+    rotnr := RotationsOfRelators(g);
     powers := PowersOfRelators(g);
     circle := CircleDegrees(g);
 
     Info( SCT, 2, "Deciding degrees of letters of notch types..." );
 
-    degs := EmptyPlist(Length(notch));
-    for i in [1..Length(notch)] do
-        n := notch[i];
-        p := powers[relnr[i]];
+    degs := EmptyPlist(Length(rels));
+    for i in [1..Length(rels)] do
+        n := rels[i];
+        p := powers[i];
         l := Length(n) / p;     # length of a chunk
         d := circle / p;        # to be distributed to each chunk
         v := QuoInt(d,l);
         r := d - v*l;           # this remains
         vals := EmptyPlist(Length(n));
-        vals2 := EmptyPlist(l);
-        for j in [1..r] do Add(vals2,v+1); od;
-        for j in [1..l-r] do Add(vals2,v); od;
-        for j in [1..p] do Append(vals,vals2); od;
+        for k in [0..p-1] do
+            for j in [1..r] do vals[k*l+j] := v+1; od;
+            for j in [r+1..l] do vals[k*l+j] := v; od;
+        od;
         Add(degs,vals);
     od;
     MakeImmutable(degs);
-    return degs;
+    degsnotch := EmptyPlist(Length(notch));
+    for i in [1..Length(notch)] do
+        Add(degsnotch,RotateWord(degs[relnr[i]],rotnr[i]));
+    od;
+    MakeImmutable(degsnotch);
+    return degsnotch;
   end);
 
 InstallMethod( PrevNextOfInverses, "for an invtab group without relators",
@@ -413,20 +475,20 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
             Add(prevnext[5],1);
         else
             Add(prevnext[5],2);
-        fi;    
+        fi;
     od;
     MakeImmutable(prevnext);
     return prevnext;
   end );
 
-InstallMethod( CheckMetricSmallCancellationCondition, 
+InstallMethod( CheckMetricSmallCancellationCondition,
   "for an invtab group without relators",
   [ IsInvTabGroupRep ],
   function( g )
     Error("inverse table group must have relators");
   end );
 
-InstallMethod( CheckMetricSmallCancellationCondition, 
+InstallMethod( CheckMetricSmallCancellationCondition,
   "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
@@ -454,9 +516,12 @@ InstallMethod( CheckMetricSmallCancellationCondition,
                     maxlen := x;
                     maxlenpos := i;
                 fi;
-                if x >= 1/2 and Length(critical) > 0 and 
-                   critical[Length(critical)] <> i then
-                    Add(critical,i);
+                if x >= 1/2 or ll - pref <= 2 then
+                    # Add to critical list:
+                    if Length(critical) > 0 and
+                       critical[Length(critical)] <> i then
+                        Add(critical,i);
+                    fi;
                 fi;
                 x := Sum(degs[i]{[ll+1-pref..ll]});
                 if x > maxdegs then
@@ -471,118 +536,126 @@ InstallMethod( CheckMetricSmallCancellationCondition,
                 circle := circ, critical := critical );
   end );
 
+InstallMethod( CheckNonMetricSmallCancellationConditionC,
+  "for an invtab group without relators",
+  [ IsInvTabGroupRep, IsPosInt ],
+  function(g,k)
+    Error("inverse table group must have relators");
+  end );
 
-###########################################################################
-# The following serves as a graveyard from which we dig up useful things:
-###########################################################################
-
-FindLongestCancellation :=
-  function( g, rels )
-    local R,cur,curstart,i,j,lcancel,notch,notchindex,pos,pos1,pre1,pre2,
-          relnr,res,startindex,w;
-    R := Set(List(rels, r->RotationReduce(g,r)));
-    if Minimum(List(R,Length)) < 3 then
-        Error("Do not give me relators of length < 3");
-        return fail;
-    fi;
-    
-    Info( SCT, 2, "Have ",Length(R)," relators. Making all notch types..." );
-
-    # Now make all the notch types:
-    notch := EmptyPlist(1000);
-    relnr := EmptyPlist(1000);  # link back to the relators
-    for i in [1..Length(R)] do
-        w := R[i];
-        for j in [1..Length(w)] do
-            Add(notch,RotateWord(w,j));
-            Add(relnr,i);
+InstallMethod( CheckNonMetricSmallCancellationConditionC,
+  "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators, IsPosInt ],
+  function(g,k)
+    local c,f,i,j,l,n,nind,notch,ok,prevnext,w,which;
+    notch := NotchTypes(g);
+    nind := NotchIndex(g);
+    prevnext := PrevNextOfInverses(g);
+    Info(SCT,2,"Checking non-metric small cancellation condition C(",k,") ...");
+    for i in [1..Length(notch)] do
+        n := i;
+        l := Length(notch[i]);
+        f := 0;
+        ok := true;
+        for j in [1..k-1] do
+            which := prevnext[5][i];
+            if which = 0 then break; fi;    # no cancellation
+            c := prevnext[which+2][i];      # the number of letters cancelling
+            f := f + c;
+            w := RotateWord(notch[n],l+1-c);
+            n := HTValue(nind,w);
+            if f >= l then ok := false; break; fi;
         od;
-    od;
-
-    # Sort them lexicographically:
-    SortParallel(notch,relnr);
-    # Remove duplicates:
-    w := 2;
-    for i in [2..Length(notch)] do
-      if notch[i] <> notch[i-1] then
-        if w < i then
-          notch[w] := notch[i];
-          relnr[w] := relnr[i];
-        fi;
-        w := w + 1;
-      fi;
-    od;
-    for i in [w..Length(notch)] do
-      Unbind(notch[i]);
-      Unbind(relnr[i]);
-    od;
-    Info( SCT, 2, "Have ",Length(notch)," notch types.");
-
-    # First make additional lookup tables:
-    Info( SCT, 2, "Creating indices...");
-    notchindex := List([1..Length(R)],x->EmptyPlist(Length(R[x])));
-    startindex := [];
-    cur := notch[1][1];
-    curstart := 1;
-    for i in [1..Length(notch)] do
-        Add(notchindex[relnr[i]],i);
-        if notch[i][1] <> cur then
-            startindex[cur] := [curstart..i-1];
-            cur := notch[i][1];
-            curstart := i;
+        if not(ok) then
+            return rec( result := false,
+                        msg := Concatenation("Does not fulfill C(",
+                        String(k),")"), notch := i, pieces := j);
         fi;
     od;
-    startindex[cur] := [curstart..Length(notch)];
+    return rec( result := true, 
+                msg := Concatenation("Fulfills C(",String(k),")") );
+  end );
 
-    # Now try to match more than half of a relator:
-    Info( SCT, 2, "Matching more than half...");
-    res := [];
-    lcancel := EmptyPlist(Length(notch));
-    for i in [1..Length(notch)] do
-        w := InverseWord(g,notch[i]);
-        pos := PositionSorted(notch,w);
-        if pos <= Length(notch) then
-            pre1 := CountCommonPrefix(w,notch[pos]);
-            if pre1 = Length(w) then   # found myself
-                pos1 := pos+1;
-                if pos1 <= Length(notch) then
-                    pre1 := CountCommonPrefix(w,notch[pos1]);
-                else
-                    pre1 := 0;
+InstallMethod( StartIndex, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function(g)
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( StartIndex, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function(g)
+    local cur,l,ll,notch,pos,pos2,starts,x;
+    notch := NotchTypes(g);
+    Info( SCT, 2, "Creating start index..." );
+    l := Length(InverseTable(g));
+    ll := Length(notch);
+    starts := EmptyPlist(l);
+    pos := 1;
+    for cur in [1..l] do
+        if pos <= ll then
+            x := notch[pos][1];
+            if x > cur then
+                starts[cur] := [];
+            elif x = cur then
+                pos2 := pos+1;
+                while pos2 <= ll and notch[pos2][1] = cur do 
+                    pos2 := pos2 + 1; 
+                od;
+                starts[cur] := [pos..pos2-1];
+                pos := pos2;
+            fi;
+        else
+            starts[cur] := [];
+        fi;
+    od;
+    MakeImmutable(starts);
+    return starts;
+  end );
+
+
+InstallMethod( MaximalEdges, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function(g)
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( MaximalEdges, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function(g)
+    local c,degs,edges,i,j,l,ll,neigh,nind,notch,pos,range,starts,w,wi,ww;
+    notch := NotchTypes(g);
+    l := Length(notch);
+    nind := NotchIndex(g);
+    starts := StartIndex(g);
+    degs := DegreesNotchTypes(g);
+
+    Info( SCT, 2, "Making maximal edges..." );
+    edges := EmptyPlist(l);
+    for i in [1..l] do
+        w := notch[i];
+        ll := Length(w);
+        wi := InverseWord(g,w);
+        range := starts[wi[1]];
+        neigh := EmptyPlist(Length(range)*2);
+        for j in range do
+            ww := Concatenation(w,notch[j]);
+            ww := ReduceWord(g,ww,true);
+            if Length(ww) > 0 then
+                pos := HTValue(nind,ww);
+                if pos = fail then
+                    neigh[Length(neigh)+1] := j;
+                    c := CountCommonPrefix(wi,notch[j]);
+                    neigh[Length(neigh)+1] := 
+                        Sum(degs[i]{[ll+1-c..ll]}) + Sum(degs[j]{[1..c]});
                 fi;
-            else
-                pos1 := pos;
             fi;
-        else
-            pre1 := 0;
-        fi;
-        if pos > 1 then
-            pre2 := CountCommonPrefix(w,notch[pos-1]);
-        else
-            pre2 := 0;
-        fi;
-        if pre2 > pre1 then
-            pre1 := pre2;
-            pos1 := pos-1;
-        fi;
-        if pre1 = 0 then
-            lcancel[i] := fail;
-        else
-            lcancel[i] := [pre1,pos1];
-            if pre1 > QuoInt(Length(w),2) then
-                Add(res,[i,pre1,pos1]);
-            fi;
-        fi;
+        od;
+        edges[Length(edges)+1] := neigh;
     od;
-    g![3] := R;
-    g![4] := notch;
-    g![5] := relnr;
-    g![6] := notchindex;
-    g![7] := startindex;
-    g![8] := lcancel;
-    SetFilterObj(g,HasNotchTypes);
-    return res;
-  end;
+    MakeImmutable(edges);
+    return edges;
+  end );
 
 # Plan:
 #
@@ -592,6 +665,5 @@ FindLongestCancellation :=
 #  Implement random presentations
 #  Experiment with product replacement step to improve small cancellation
 #  Experiment with low index
-#  Implement check for C6 (earlier?)
 #  Implement two-dimensional analysis for more officers
 #  Do more experiments with change of generating set

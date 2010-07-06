@@ -2,13 +2,81 @@ LoadPackage("sct");
 SetInfoLevel(SCT,3);
 g := MakeInverseTableGroup([2,1,3],"RST");
 DefineRelators(g,[WordName(g,"RRR"), WordName(g,"SSS"), 
-                  WordName(g,"STSTSTSTSTSTST")]);
+                  WordName(g,"STSTSTSTSTSTST"),
+                  WordName(g,"TRTRTRTRTRTRTR")]);
 Relators(g);
 PowersOfRelators(g);
 CircleDegrees(g);
 NotchTypes(g);
 RelatorNumbersNotchTypes(g);
+RotationsOfRelators(g);
 DegreesNotchTypes(g);
 PrevNextOfInverses(g);
 CheckMetricSmallCancellationCondition(g);
+CheckNonMetricSmallCancellationConditionC(g,6);
+StartIndex(g);
+MaximalEdges(g);
+
+# Rewrite: U=ST, UV=1, S=UT, R=TV
+
+g := MakeInverseTableGroup([2,1,3],"UVT");
+DefineRelators(g,[WordName(g,"TVTVTV"), WordName(g,"UTUTUT"), 
+                  WordName(g,"UUUUUUU"), WordName(g,"VVVVVVV")]);
+Relators(g);
+PowersOfRelators(g);
+CircleDegrees(g);
+NotchTypes(g);
+RelatorNumbersNotchTypes(g);
+RotationsOfRelators(g);
+DegreesNotchTypes(g);
+PrevNextOfInverses(g);
+CheckMetricSmallCancellationCondition(g);
+CheckNonMetricSmallCancellationConditionC(g,6);
+StartIndex(g);
+MaximalEdges(g);
+
+# Free abelian group:
+
+g := MakeInverseTableGroup([3,4,1,2],"ABab");
+DefineRelators(g,["ABab"]);
+Relators(g);
+PowersOfRelators(g);
+CircleDegrees(g);
+NotchTypes(g);
+RelatorNumbersNotchTypes(g);
+RotationsOfRelators(g);
+DegreesNotchTypes(g);
+PrevNextOfInverses(g);
+CheckMetricSmallCancellationCondition(g);
+CheckNonMetricSmallCancellationConditionC(g,4);
+StartIndex(g);
+MaximalEdges(g);
+
+# G = <a,b|abab^2ab^3...ab^100>
+
+g := MakeInverseTableGroup([3,4,1,2],"abAB");
+rel := "";
+n := 100;
+for i in [1..n] do
+  Add(rel,'a');
+  Append(rel,ListWithIdenticalEntries(i,'b'));
+od;
+rel2 := "";
+for i in [n,n-1..1] do
+  Append(rel2,ListWithIdenticalEntries(i,'B'));
+  Add(rel2,'A');
+od;
+DefineRelators(g,[rel,rel2]);
+Relators(g);
+PowersOfRelators(g);
+CircleDegrees(g);
+NotchTypes(g);;
+RelatorNumbersNotchTypes(g);
+RotationsOfRelators(g);
+DegreesNotchTypes(g);;
+PrevNextOfInverses(g);;
+CheckMetricSmallCancellationCondition(g);
+CheckNonMetricSmallCancellationConditionC(g,10);
+StartIndex(g);
+MaximalEdges(g);
 

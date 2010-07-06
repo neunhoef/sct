@@ -45,8 +45,11 @@ DeclareAttribute( "PowersOfRelators", IsInvTabGroup );
 DeclareAttribute( "CircleDegrees", IsInvTabGroup );
 DeclareAttribute( "NotchTypes", IsInvTabGroup );
 DeclareAttribute( "RelatorNumbersNotchTypes", IsInvTabGroup );
+DeclareAttribute( "RotationsOfRelators", IsInvTabGroup );
+DeclareAttribute( "NotchIndex", IsInvTabGroup );
 DeclareAttribute( "DegreesNotchTypes", IsInvTabGroup );
 DeclareAttribute( "PrevNextOfInverses", IsInvTabGroup );
+DeclareAttribute( "StartIndex", IsInvTabGroup );
 DeclareAttribute( "MaximalEdges", IsInvTabGroup );
 DeclareAttribute( "MaximalEdgeIndex", IsInvTabGroup );
 
