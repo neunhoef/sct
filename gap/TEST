@@ -78,5 +78,4 @@ PrevNextOfInverses(g);;
 CheckMetricSmallCancellationCondition(g);
 CheckNonMetricSmallCancellationConditionC(g,10);
 StartIndex(g);
-MaximalEdges(g);
 
