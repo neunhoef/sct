@@ -424,7 +424,7 @@ InstallMethod( PrevNextOfInverses, "for an invtab group without relators",
 InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
-    local i,l,next,notch,pos,pref,pref2,prev,prevnext,w;
+    local i,invs,l,next,notch,pos,pref,pref2,prev,prevnext,w;
 
     notch := NotchTypes(g);
 
@@ -433,6 +433,7 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
     l := Length(notch);
     prevnext := [EmptyPlist(l),EmptyPlist(l),EmptyPlist(l),EmptyPlist(l),
                  EmptyPlist(l)];
+    invs := 0*[1..l];    # 0 means no inverse
     for i in [1..l] do
         w := InverseWord(g,notch[i]);
         pos := PositionSorted(notch,w);
@@ -450,6 +451,7 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
         if pos > l then
             next := fail;
         elif notch[pos] = w then    # the exact inverse is a notch type
+            invs[i] := pos;
             if pos < l then
                 next := pos+1;
             else
@@ -478,7 +480,22 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
         fi;
     od;
     MakeImmutable(prevnext);
+    MakeImmutable(invs);
+    SetInverseNotchTypes(g,invs);
     return prevnext;
+  end );
+
+InstallMethod( InverseNotchTypes, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function( g )
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( InverseNotchTypes, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function( g )
+    PrevNextOfInverses(g);
+    return g!.InverseNotchTypes;
   end );
 
 InstallMethod( CheckMetricSmallCancellationCondition,
@@ -655,6 +672,57 @@ InstallMethod( MaximalEdges, "for an invtab group with relators",
     od;
     MakeImmutable(edges);
     return edges;
+  end );
+
+InstallMethod( IsT4SmallCancellation, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function( g )
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( IsT4SmallCancellation, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function( g )
+    local counterwitness,i,invs,j,k,l,ll,lll,neigh,neigh2,neigh3,notch,stind;
+    notch := NotchTypes(g);
+    stind := StartIndex(g);
+    l := Length(stind);   # Number of notch types
+    invs := InverseNotchTypes(g);
+    Info( SCT, 2, "Checking small cancellation condition T4..." );
+    for i in [1..l] do
+        # we check whether or not i is in a loop of length 3 not containing
+        # a notch type <i and not containing a loop of length 2 and not
+        # putting a notch type and its inverse together:
+        neigh := stind[g!.inv[notch[i][Length(notch[i])]]];
+        ll := Length(neigh);
+        if ll > 0 then  # otherwise no neighbours
+            if i >= neigh[1] then
+                neigh := [i+1..neigh[ll]];
+            fi;
+            for j in neigh do    # the neighbours of i
+                if j <> invs[i] then
+                    neigh2 := stind[g!.inv[notch[j][Length(notch[j])]]];
+                    lll := Length(neigh2);
+                    if lll > 0 then   # otherwise j has no neighbours
+                        if i >= neigh2[1] then
+                            neigh2 := [i+1..neigh2[lll]];
+                        fi;
+                        for k in neigh2 do
+                            if k <> invs[j] then
+                                neigh3 := stind[g!.inv[
+                                                 notch[k][Length(notch[k])]]];
+                                if i in neigh3 then
+                                    g!.T4counterwitness := [i,j,k];
+                                    return false;
+                                fi;
+                            fi;
+                        od;
+                    fi;
+                fi;
+            od;
+        fi;
+    od;
+    return true;
   end );
 
 # Plan:

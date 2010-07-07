@@ -49,9 +49,11 @@ DeclareAttribute( "RotationsOfRelators", IsInvTabGroup );
 DeclareAttribute( "NotchIndex", IsInvTabGroup );
 DeclareAttribute( "DegreesNotchTypes", IsInvTabGroup );
 DeclareAttribute( "PrevNextOfInverses", IsInvTabGroup );
+DeclareAttribute( "InverseNotchTypes", IsInvTabGroup );
 DeclareAttribute( "StartIndex", IsInvTabGroup );
 DeclareAttribute( "MaximalEdges", IsInvTabGroup );
 DeclareAttribute( "MaximalEdgeIndex", IsInvTabGroup );
+DeclareProperty( "IsT4SmallCancellation", IsInvTabGroup );
 
 # The operations:
 
@@ -111,3 +113,4 @@ DeclareOperation( "CheckNonMetricSmallCancellationConditionC",
   [ IsInvTabGroup, IsPosInt ] );
 # This checks the non-metric small cancellation condition C(x) which means
 # that no relator is a product of at most x pieces.
+
