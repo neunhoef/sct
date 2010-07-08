@@ -723,44 +723,40 @@ InstallMethod( IsT4SmallCancellation, "for an invtab group without relators",
 InstallMethod( IsT4SmallCancellation, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
-    local counterwitness,i,invs,j,k,l,ll,lll,neigh,neigh2,neigh3,notch,stind;
+    local b,counterwitness,i,invs,j,k,n,neigh,notch,stind,y;
+    n := Length(g!.inv);
     notch := NotchTypes(g);
     stind := StartIndex(g);
-    l := Length(stind);   # Number of notch types
     invs := InverseNotchTypes(g);
     Info( SCT, 2, "Checking small cancellation condition T4..." );
-    for i in [1..l] do
-        # we check whether or not i is in a loop of length 3 not containing
-        # a notch type <i and not containing a loop of length 2 and not
-        # putting a notch type and its inverse together:
-        neigh := stind[g!.inv[notch[i][Length(notch[i])]]];
-        ll := Length(neigh);
-        if ll > 0 then  # otherwise no neighbours
-            if i >= neigh[1] then
-                neigh := [i+1..neigh[ll]];
+    # First make neighbourhood table for generators:
+    neigh := EmptyPlist(n);
+    for i in [1..n] do
+        b := BlistList([1..n],[]);
+        for j in stind[i] do
+            y := g!.inv[notch[j][Length(notch[j])]];
+            # Check whether or not there is a notch type starting with
+            # y which is not the inverse of j:
+            if Length(stind[y]) > 1 or 
+               (Length(stind[y]) = 1 and not(stind[y][1] = invs[j])) then
+                b[y] := true;
             fi;
-            for j in neigh do    # the neighbours of i
-                if j <> invs[i] then
-                    neigh2 := stind[g!.inv[notch[j][Length(notch[j])]]];
-                    lll := Length(neigh2);
-                    if lll > 0 then   # otherwise j has no neighbours
-                        if i >= neigh2[1] then
-                            neigh2 := [i+1..neigh2[lll]];
-                        fi;
-                        for k in neigh2 do
-                            if k <> invs[j] then
-                                neigh3 := stind[g!.inv[
-                                                 notch[k][Length(notch[k])]]];
-                                if i in neigh3 then
-                                    g!.T4counterwitness := [i,j,k];
-                                    return false;
-                                fi;
-                            fi;
-                        od;
+        od;
+        neigh[i] := ListBlist([1..n],b);
+    od;
+    for i in [1..n] do
+        # we check whether or not i is in a loop of length 3 not containing
+        # a letter <i and not containing a loop of length 2:
+        for j in neigh[i] do    # the neighbours of i
+            if j > i then
+                for k in neigh[j] do
+                    if k > i and i in neigh[k] then
+                        g!.T4counterwitness := [i,j,k];
+                        return false;
                     fi;
-                fi;
-            od;
-        fi;
+                od;
+            fi;
+        od;
     od;
     return true;
   end );
@@ -784,12 +780,14 @@ InstallGlobalFunction( Poppy,
     # in the form node number followed by label (zipped list).
     # The function tries to find all circuits of length at least 3 in the 
     # graph with label sum less than limit.
+    local Dowork,alllinks,i,j,li,n,path,res;
     Dowork := function( path, depth, first, sum, links, limit, res )
       local i,li;
       li := links[path[depth]];
       if depth > 2 then   # try to close
           for i in [1,3..Length(li)-1] do
-              if li[i] = path[1] and sum + li[i+1] < limit then
+              if li[i] = path[1] and sum + li[i+1] < limit and
+                 li[i+1] >= first then
                   path[depth+1] := sum + li[i+1];
                   Add(res,path{[1..depth+1]});
                   break;
@@ -798,12 +796,35 @@ InstallGlobalFunction( Poppy,
       fi;
       # Try to add another link:
       for i in [1,3..Length(li)-1] do
-          if sum + li[i+1] + first < limit then
+          if li[i+1] >= first and sum + li[i+1] + first < limit then
               path[depth+1] := li[i];
-              Dowork(path,depth+1,first,sum+li[i],links,limit,res);
+              Dowork(path,depth+1,first,sum+li[i+1],links,limit,res);
           fi;
       od;
-      ...
+    end;
+
+    # First collect all directed links in a big list:
+    n := Length(links);
+    alllinks := EmptyPlist(Sum(links,Length)/2);
+    for i in [1..n] do
+        li := links[i];
+        for j in [1,3..Length(li)-1] do
+            alllinks[Length(alllinks)+1] := [li[j+1],i,li[j]];
+        od;
+    od;
+    # Now sort lexicographically:
+    Sort(alllinks);
+    # Now start the work:
+    res := [];
+    path := EmptyPlist(10);
+    i := 1;
+    while i <= Length(alllinks) and alllinks[i][1] * 3 < limit do
+        path[1] := alllinks[i][2];
+        path[2] := alllinks[i][3];
+        Dowork(path,2,alllinks[i][1],alllinks[i][1],links,limit,res);
+        i := i + 1;
+    od;
+    return res;
   end );
 
 # Plan:

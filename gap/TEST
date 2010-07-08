@@ -16,7 +16,8 @@ CheckMetricSmallCancellationCondition(g);
 CheckNonMetricSmallCancellationCondition(g,6);
 StartIndex(g);
 CheckT4SmallCancellationCondition(g);
-MaximalEdges(g);
+links := MaximalEdges(g);
+Poppy(links,CircleDegrees(g));
 
 # Rewrite: U=ST, UV=1, S=UT, R=TV
 
@@ -35,7 +36,8 @@ CheckMetricSmallCancellationCondition(g);
 CheckNonMetricSmallCancellationCondition(g,6);
 StartIndex(g);
 CheckT4SmallCancellationCondition(g);
-MaximalEdges(g);
+links := MaximalEdges(g);
+Poppy(links,CircleDegrees(g));
 
 # Free abelian group:
 
@@ -54,6 +56,8 @@ CheckNonMetricSmallCancellationCondition(g,4);
 StartIndex(g);
 CheckT4SmallCancellationCondition(g);
 MaximalEdges(g);
+links := MaximalEdges(g);
+Poppy(links,CircleDegrees(g));
 
 # G = <a,b|abab^2ab^3...ab^100>
 
@@ -70,12 +74,12 @@ for i in [n,n-1..1] do
   Add(rel2,'A');
 od;
 DefineRelators(g,[rel,rel2]);
-Relators(g);
+Relators(g);;
 PowersOfRelators(g);
 CircleDegrees(g);
 NotchTypes(g);;
-RelatorNumbersNotchTypes(g);
-RotationsOfRelators(g);
+RelatorNumbersNotchTypes(g);;
+RotationsOfRelators(g);;
 AnglesForNotchTypes(g);;
 PrevNextOfInverses(g);;
 CheckMetricSmallCancellationCondition(g);
