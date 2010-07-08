@@ -47,7 +47,7 @@ DeclareAttribute( "NotchTypes", IsInvTabGroup );
 DeclareAttribute( "RelatorNumbersNotchTypes", IsInvTabGroup );
 DeclareAttribute( "RotationsOfRelators", IsInvTabGroup );
 DeclareAttribute( "NotchIndex", IsInvTabGroup );
-DeclareAttribute( "DegreesNotchTypes", IsInvTabGroup );
+DeclareAttribute( "AnglesForNotchTypes", IsInvTabGroup );
 DeclareAttribute( "PrevNextOfInverses", IsInvTabGroup );
 DeclareAttribute( "InverseNotchTypes", IsInvTabGroup );
 DeclareAttribute( "StartIndex", IsInvTabGroup );
@@ -93,6 +93,9 @@ DeclareGlobalFunction( "CompareRotation" );
 # is lex-smaller, 0 if they are equal and +1 if the second is
 # lex-smaller.
 
+DeclareGlobalFunction( "HashFunctionForNotchTypes" );
+# Only looks at the length and the first 100 letters and uses JENKINS.
+
 DeclareOperation( "DefineRelators", [IsInvTabGroup, IsList] );
 # This sets the relators, some initial checking is done.
 
@@ -109,8 +112,13 @@ DeclareOperation( "CheckMetricSmallCancellationCondition",
 # however, one will not get rid of the relator.
 # A list of such "critical" notch types is collected.
 
-DeclareOperation( "CheckNonMetricSmallCancellationConditionC",
+DeclareOperation( "CheckNonMetricSmallCancellationCondition",
   [ IsInvTabGroup, IsPosInt ] );
 # This checks the non-metric small cancellation condition C(x) which means
 # that no relator is a product of at most x pieces.
 
+DeclareOperation( "CheckT4SmallCancellationCondition", [ IsInvTabGroup ] );
+# This triggers computation of the attribute IsT4SmallCancellation and
+# returns a counter-witness if the condition is not fulfilled.
+
+DeclareGlobalFunction( "Poppy" );

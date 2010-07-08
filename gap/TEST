@@ -10,11 +10,12 @@ CircleDegrees(g);
 NotchTypes(g);
 RelatorNumbersNotchTypes(g);
 RotationsOfRelators(g);
-DegreesNotchTypes(g);
+AnglesForNotchTypes(g);
 PrevNextOfInverses(g);
 CheckMetricSmallCancellationCondition(g);
-CheckNonMetricSmallCancellationConditionC(g,6);
+CheckNonMetricSmallCancellationCondition(g,6);
 StartIndex(g);
+CheckT4SmallCancellationCondition(g);
 MaximalEdges(g);
 
 # Rewrite: U=ST, UV=1, S=UT, R=TV
@@ -28,11 +29,12 @@ CircleDegrees(g);
 NotchTypes(g);
 RelatorNumbersNotchTypes(g);
 RotationsOfRelators(g);
-DegreesNotchTypes(g);
+AnglesForNotchTypes(g);
 PrevNextOfInverses(g);
 CheckMetricSmallCancellationCondition(g);
-CheckNonMetricSmallCancellationConditionC(g,6);
+CheckNonMetricSmallCancellationCondition(g,6);
 StartIndex(g);
+CheckT4SmallCancellationCondition(g);
 MaximalEdges(g);
 
 # Free abelian group:
@@ -45,11 +47,12 @@ CircleDegrees(g);
 NotchTypes(g);
 RelatorNumbersNotchTypes(g);
 RotationsOfRelators(g);
-DegreesNotchTypes(g);
+AnglesForNotchTypes(g);
 PrevNextOfInverses(g);
 CheckMetricSmallCancellationCondition(g);
-CheckNonMetricSmallCancellationConditionC(g,4);
+CheckNonMetricSmallCancellationCondition(g,4);
 StartIndex(g);
+CheckT4SmallCancellationCondition(g);
 MaximalEdges(g);
 
 # G = <a,b|abab^2ab^3...ab^100>
@@ -73,9 +76,10 @@ CircleDegrees(g);
 NotchTypes(g);;
 RelatorNumbersNotchTypes(g);
 RotationsOfRelators(g);
-DegreesNotchTypes(g);;
+AnglesForNotchTypes(g);;
 PrevNextOfInverses(g);;
 CheckMetricSmallCancellationCondition(g);
-CheckNonMetricSmallCancellationConditionC(g,10);
+CheckNonMetricSmallCancellationCondition(g,10);
 StartIndex(g);
-
+CheckT4SmallCancellationCondition(g);
+# Do not do MaximalEdges(g); since it would take too long and too much memory

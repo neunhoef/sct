@@ -355,6 +355,17 @@ InstallMethod( NotchIndex, "for an invtab group without relators",
     Error("inverse table group must have relators");
   end );
 
+InstallGlobalFunction( HashFunctionForNotchTypes,
+  function(w,data)
+    local l;
+    l := Length(w);
+    if l > 100 then
+        return JENKINS_HASH_IN_ORB(w, 0, GAPInfo.BytesPerVariable * 100, data);
+    else
+        return JENKINS_HASH_IN_ORB(w, 0, GAPInfo.BytesPerVariable * l, data);
+    fi;
+  end );
+
 InstallMethod( NotchIndex, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
@@ -362,22 +373,22 @@ InstallMethod( NotchIndex, "for an invtab group with relators",
     notch := NotchTypes(g);
     Info( SCT, 2, "Generating notch index..." );
     hlen := NextPrimeInt(Length(notch));
-    hf := MakeHashFunctionForPlainFlatList(hlen);
-    ht := HTCreate([1,2,3],rec( treehashsize := hlen, hf := hf.func,
-                                hfd := hf.data ));
+    ht := HTCreate([1,2,3],rec( treehashsize := hlen, 
+                                hf := HashFunctionForNotchTypes,
+                                hfd := hlen ));
     for i in [1..Length(notch)] do
         HTAdd(ht,notch[i],i);
     od;
     return ht;
   end );
 
-InstallMethod( DegreesNotchTypes, "for an invtab group without relators",
+InstallMethod( AnglesForNotchTypes, "for an invtab group without relators",
   [ IsInvTabGroupRep ],
   function( g )
     Error("inverse table group must have relators");
   end );
 
-InstallMethod( DegreesNotchTypes, "for an invtab group with relators",
+InstallMethod( AnglesForNotchTypes, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
     local circle,d,degs,degsnotch,i,j,k,l,n,notch,p,powers,r,relnr,rels,
@@ -389,7 +400,7 @@ InstallMethod( DegreesNotchTypes, "for an invtab group with relators",
     powers := PowersOfRelators(g);
     circle := CircleDegrees(g);
 
-    Info( SCT, 2, "Deciding degrees of letters of notch types..." );
+    Info( SCT, 2, "Deciding angles of letters of notch types..." );
 
     degs := EmptyPlist(Length(rels));
     for i in [1..Length(rels)] do
@@ -424,9 +435,10 @@ InstallMethod( PrevNextOfInverses, "for an invtab group without relators",
 InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function( g )
-    local i,invs,l,next,notch,pos,pref,pref2,prev,prevnext,w;
+    local i,invs,l,next,nind,notch,pos,pref,pref2,prev,prevnext,w;
 
     notch := NotchTypes(g);
+    nind := NotchIndex(g);
 
     Info( SCT, 2, "Finding previous and next of inverses..." );
 
@@ -436,7 +448,10 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
     invs := 0*[1..l];    # 0 means no inverse
     for i in [1..l] do
         w := InverseWord(g,notch[i]);
-        pos := PositionSorted(notch,w);
+        pos := HTValue(nind,w);
+        if pos = fail then    # inverse is not present
+            pos := PositionSorted(notch,w);
+        fi;
         # Find the previous one if it exists:
         if pos > 1 then
             prev := pos-1;
@@ -514,7 +529,7 @@ InstallMethod( CheckMetricSmallCancellationCondition,
     circ := CircleDegrees(g);
     notch := NotchTypes(g);
     l := Length(notch);
-    degs := DegreesNotchTypes(g);
+    degs := AnglesForNotchTypes(g);
     prevnext := PrevNextOfInverses(g);
 
     Info( SCT, 2, "Checking metric small cancellation condition..." );
@@ -553,14 +568,14 @@ InstallMethod( CheckMetricSmallCancellationCondition,
                 circle := circ, critical := critical );
   end );
 
-InstallMethod( CheckNonMetricSmallCancellationConditionC,
+InstallMethod( CheckNonMetricSmallCancellationCondition,
   "for an invtab group without relators",
   [ IsInvTabGroupRep, IsPosInt ],
   function(g,k)
     Error("inverse table group must have relators");
   end );
 
-InstallMethod( CheckNonMetricSmallCancellationConditionC,
+InstallMethod( CheckNonMetricSmallCancellationCondition,
   "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators, IsPosInt ],
   function(g,k)
@@ -645,7 +660,7 @@ InstallMethod( MaximalEdges, "for an invtab group with relators",
     l := Length(notch);
     nind := NotchIndex(g);
     starts := StartIndex(g);
-    degs := DegreesNotchTypes(g);
+    degs := AnglesForNotchTypes(g);
 
     Info( SCT, 2, "Making maximal edges..." );
     edges := EmptyPlist(l);
@@ -664,7 +679,7 @@ InstallMethod( MaximalEdges, "for an invtab group with relators",
                     neigh[Length(neigh)+1] := j;
                     c := CountCommonPrefix(wi,notch[j]);
                     neigh[Length(neigh)+1] := 
-                        Sum(degs[i]{[ll+1-c..ll]}) + Sum(degs[j]{[1..c]});
+            QuoInt(Sum(degs[i]{[ll+1-c..ll]}) + Sum(degs[j]{[1..c]}),2);
                 fi;
             fi;
         od;
@@ -725,13 +740,55 @@ InstallMethod( IsT4SmallCancellation, "for an invtab group with relators",
     return true;
   end );
 
+InstallMethod( CheckT4SmallCancellationCondition, 
+  "for an invtab group with relators",
+  [ IsInvTabGroup ],
+  function(g)
+    if IsT4SmallCancellation(g) then
+        return true;
+    else
+        return g!.T4counterwitness;
+    fi;
+  end );
+
+InstallGlobalFunction( Poppy,
+  function( links, limit )
+    # This function gets a directed graph with node set [1..Length(links)]
+    # with labels on the links. The graph is given as a list links, and
+    # links[i] is a list of length 2*k containing the k neighbours of node i
+    # in the form node number followed by label (zipped list).
+    # The function tries to find all circuits of length at least 3 in the 
+    # graph with label sum less than limit.
+    Dowork := function( path, depth, first, sum, links, limit, res )
+      local i,li;
+      li := links[path[depth]];
+      if depth > 2 then   # try to close
+          for i in [1,3..Length(li)-1] do
+              if li[i] = path[1] and sum + li[i+1] < limit then
+                  path[depth+1] := sum + li[i+1];
+                  Add(res,path{[1..depth+1]});
+                  break;
+              fi;
+          od;
+      fi;
+      # Try to add another link:
+      for i in [1,3..Length(li)-1] do
+          if sum + li[i+1] + first < limit then
+              path[depth+1] := li[i];
+              Dowork(path,depth+1,first,sum+li[i],links,limit,res);
+          fi;
+      od;
+      ...
+  end );
+
 # Plan:
 #
-#  Do something about at least half-cancellation --> Earthquake?
+#  Implement generic Poppy
 #  Make finitely presented group into invtab group plus rels
-#  Output decent statistics about cancellation
 #  Implement random presentations
+#  Output decent statistics about cancellation
 #  Experiment with product replacement step to improve small cancellation
 #  Experiment with low index
 #  Implement two-dimensional analysis for more officers
+#  Do something about at least half-cancellation --> Earthquake?
 #  Do more experiments with change of generating set
