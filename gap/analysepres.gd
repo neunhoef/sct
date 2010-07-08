@@ -41,6 +41,7 @@ InvTabGroupType := NewType(InvTabGroupFamily, IsInvTabGroupRep);
 DeclareAttribute( "InverseTable", IsInvTabGroup );
 DeclareAttribute( "GeneratorNames", IsInvTabGroup );
 DeclareAttribute( "Relators", IsInvTabGroup );
+DeclareAttribute( "NotchNumbersOfRotations", IsInvTabGroup );
 DeclareAttribute( "PowersOfRelators", IsInvTabGroup );
 DeclareAttribute( "CircleDegrees", IsInvTabGroup );
 DeclareAttribute( "NotchTypes", IsInvTabGroup );

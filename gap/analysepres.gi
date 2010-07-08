@@ -285,14 +285,16 @@ InstallMethod( NotchTypes, "for an invtab group without relators",
 InstallMethod( NotchTypes, "for an inverse table group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function(g)
-    local i,j,l,notch,p,perm,powers,r,relnr,rels,rotnr;
+    local i,j,l,notch,notnr,p,perm,powers,r,relnr,rels,rotnr,tab;
 
     rels := Relators(g);
     powers := PowersOfRelators(g);
 
     Info( SCT, 2, "Making notch types..." );
 
-    l := Sum(powers);
+    l := List([1..Length(rels)],i->Length(rels[i])/powers[i]);
+    notnr := List(l,x->EmptyPlist(x));
+    l := Sum(l);
     notch := EmptyPlist(l);
     relnr := EmptyPlist(l);
     rotnr := EmptyPlist(l);
@@ -300,9 +302,10 @@ InstallMethod( NotchTypes, "for an inverse table group with relators",
         r := rels[i];
         p := powers[i];
         for j in [1..Length(r)/p] do
-            Add(notch,RotateWord(r,j));
-            Add(relnr,i);
-            Add(rotnr,j);
+            notch[Length(notch)+1] := RotateWord(r,j);
+            relnr[Length(relnr)+1] := i;
+            rotnr[Length(rotnr)+1] := j;
+            notnr[i][j] := Length(notch);
         od;
     od;
     # Sort them lexicographically:
@@ -310,15 +313,19 @@ InstallMethod( NotchTypes, "for an inverse table group with relators",
     perm := Sortex(notch);
     relnr := Permuted(relnr,perm);
     rotnr := Permuted(rotnr,perm);
+    tab := ListPerm(perm,Length(notch));
+    notnr := List(notnr,x->tab{x});
 
     # Make it immutable:
     MakeImmutable(notch);
     MakeImmutable(relnr);
     MakeImmutable(rotnr);
+    MakeImmutable(notnr);
 
     Info( SCT, 2, "Have ",Length(notch)," notch types.");
     SetRelatorNumbersNotchTypes(g,relnr);
     SetRotationsOfRelators(g,rotnr);
+    SetNotchNumbersOfRotations(g,notnr);
 
     return notch;
   end );
@@ -347,6 +354,19 @@ InstallMethod( RotationsOfRelators, "for an invtab group with relators",
   function( g )
     NotchTypes(g);
     return g!.RotationsOfRelators;
+  end );
+
+InstallMethod( NotchNumbersOfRotations, "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function( g )
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( NotchNumbersOfRotations, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function( g )
+    NotchTypes(g);
+    return g!.NotchNumbersOfRotations;
   end );
 
 InstallMethod( NotchIndex, "for an invtab group without relators",
@@ -579,9 +599,13 @@ InstallMethod( CheckNonMetricSmallCancellationCondition,
   "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators, IsPosInt ],
   function(g,k)
-    local c,f,i,j,l,n,nind,notch,ok,prevnext,w,which;
+    local c,f,i,j,l,n,nind,notch,notnr,ok,pows,prevnext,r,relnr,rotnr,rr,which;
     notch := NotchTypes(g);
     nind := NotchIndex(g);
+    relnr := RelatorNumbersNotchTypes(g);
+    rotnr := RotationsOfRelators(g);
+    notnr := NotchNumbersOfRotations(g);
+    pows := PowersOfRelators(g);
     prevnext := PrevNextOfInverses(g);
     Info(SCT,2,"Checking non-metric small cancellation condition C(",k,") ...");
     for i in [1..Length(notch)] do
@@ -589,13 +613,14 @@ InstallMethod( CheckNonMetricSmallCancellationCondition,
         l := Length(notch[i]);
         f := 0;
         ok := true;
+        r := relnr[n];
+        rr := l / pows[r];
         for j in [1..k-1] do
             which := prevnext[5][i];
             if which = 0 then break; fi;    # no cancellation
             c := prevnext[which+2][i];      # the number of letters cancelling
             f := f + c;
-            w := RotateWord(notch[n],l+1-c);
-            n := HTValue(nind,w);
+            n := notnr[r][(rotnr[n] - c - 1) mod rr + 1];
             if f >= l then ok := false; break; fi;
         od;
         if not(ok) then
