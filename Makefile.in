@@ -1,0 +1,83 @@
+#
+# makefile for the sct package                             
+#                                                               Steve Linton
+#                                                            Max Neunhoeffer
+#                                                             Richard Parker
+#                                                         Colva Roney-Dougal
+#
+##  Copyright (C) 2010  Max Neunhoeffer
+##  This file is free software, see license information at the end.
+#
+CC=cc
+
+COMPILEOPTIONS="-O3 -fomit-frame-pointer"
+#COMPILEOPTIONS="-O3 -g -fomit-frame-pointer"
+#COMPILEOPTIONS="-O0 -g -Wall"
+# Some experiments:
+#COMPILEOPTIONS="-march=i686 -mcpu=pentium4 -O3 -fomit-frame-pointer"
+#COMPILEOPTIONS="-march=i686 -mcpu=pentium4 -O3 -fomit-frame-pointer -falign-loops=5 -finline-limit=6000"
+
+GAPINCL=-I$(GAPPATH)/src -I$(GAPPATH)/bin/@GAPARCH@
+
+.PHONY: bindir clean doc test
+
+default: bindir bin/@GAPARCH@/sct.so
+
+# this target creates a bin-directory
+bindir:
+	if test ! -d bin;  then mkdir bin;  fi
+	if test ! -d bin/@GAPARCH@;  then mkdir bin/@GAPARCH@;  fi
+
+bin/@GAPARCH@/sct.so: src/sct.c
+	cp $(GAPPATH)/bin/@GAPARCH@/config.h bin/@GAPARCH@
+	$(GAPPATH)/bin/@GAPARCH@/gac -p ${COMPILEOPTIONS} -d -o bin/@GAPARCH@/sct.so src/sct.c
+
+# make a statically linked GAP including the sct module
+static:
+	(cd $(GAPPATH)/bin/@GAPARCH@; \
+	./gac -o gap-static -p "-DSCTSTATIC" -p ${COMPILEOPTIONS} -P "-static" \
+	../../pkg/sct/src/sct.c)
+
+doc: doc/manual.six
+
+doc/manual.six: doc/analyse.xml doc/install.xml \
+		doc/examples.xml doc/intro.xml VERSION
+	($(GAPPATH)/bin/gap.sh makedoc.g)
+
+clean:
+	(cd doc ; ./clean)
+	rm -rf bin/@GAPARCH@ Makefile
+
+archive: doc
+	(cd .. ; tar czvf sct-`cat sct/VERSION`.tar.gz --exclude ".svn" --exclude bin --exclude test sct)
+
+WEBPOS=/scratch/neunhoef/mywebpage.pub/Computer/Software/Gap/SCT
+
+towww: archive
+	echo '<?xml version="1.0" encoding="ISO-8859-1"?>' >${WEBPOS}.version
+	echo '<mixer>' >>${WEBPOS}.version
+	cat VERSION >>${WEBPOS}.version
+	echo '</mixer>' >>${WEBPOS}.version
+	cp PackageInfo.g ${WEBPOS}
+	cp README ${WEBPOS}/README.sct
+	cp doc/manual.pdf ${WEBPOS}/sct.pdf
+	cp ../sct-`cat VERSION`.tar.gz ${WEBPOS}
+	@echo
+	@echo Now please adjust the archive link in 
+	@echo "    " ${WEBPOS}.mixer !
+
+##
+##  This program is free software; you can redistribute it and/or modify
+##  it under the terms of the GNU General Public License as published by
+##  the Free Software Foundation; version 2 of the License.
+##
+##  This program is distributed in the hope that it will be useful,
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##  GNU General Public License for more details.
+##
+##  You should have received a copy of the GNU General Public License
+##  along with this program; if not, write to the Free Software
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+
