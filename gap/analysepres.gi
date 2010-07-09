@@ -837,11 +837,101 @@ InstallGlobalFunction( Poppy,
     return res;
   end );
 
+InstallGlobalFunction( AnalyseFpGroup,
+  function( g )
+    local LenLex,done,done2,exa,i,invols,j,k,lv,lw,ngens,pos,rels,x,y;
+    LenLex := function(v,w) 
+      local lv,lw;
+      lv := Length(v);
+      lw := Length(w);
+      if lv < lw then return true;
+      elif lv > lw then return false;
+      else return v < w; fi;  # Lexicographic
+    end;
+    ngens := Length(GeneratorsOfGroup(g));
+    rels := List(RelatorsOfFpGroup(g),LetterRepAssocWord);
+    exa := GeneratorsOfGroup(g)[1];
+    while true do   # will be left by break, continue is used for goto up
+        if Length(rels) = 0 then break; fi;
+        Sort(rels,LenLex);
+        # Forget about relators of length 0:
+        if Length(rels) > 0 and Length(rels[1]) = 0 then
+            pos := First([1..Length(rels)],i->Length(rels[i]) > 0);
+            if pos = fail then
+                rels := [];
+                break;
+            fi;
+            rels := rels{[pos..Length(rels)]};
+        fi;
+        
+        i := 1;
+        # First take care of relators of length 1:
+        if i <= Length(rels) and Length(rels[i]) = 1 then
+            while i <= Length(rels) and Length(rels[i]) = 1 do
+                x := rels[i][1];
+                for j in [1..Length(rels)] do
+                    rels[j] := Filtered(rels[j],y -> y <> x and y <> -x);
+                od;
+                i := i + 1;
+            od;
+            continue;     # go back to the beginning
+        fi;
+
+        # Now take care of relators of length 2:
+        invols := [];
+        if i <= Length(rels) and Length(rels[i]) = 2 then
+            done2 := false;
+            while i <= Length(rels) and Length(rels[i]) = 2 do
+                if rels[i][1] = - rels[i][2] then
+                    rels[i] := [];
+                    done2 := true;
+                elif rels[i][1] = rels[i][2] then
+                    if rels[i][1] > 0 then
+                        Add(invols,rels[i][1]);
+                    else
+                        Add(invols,-rels[i][1]);
+                    fi;
+                else
+                    done2 := true;
+                    x := rels[i][1];
+                    y := -rels[i][2];
+                    for j in [1..rels] do
+                        if j <> i then
+                            done := false;
+                            for k in [1..Length(rels[j])] do
+                                if rels[j][k] = y then
+                                    rels[j][k] := x;
+                                    done := true;
+                                elif rels[j][k] = -y then
+                                    rels[j][k] := -x;
+                                    done := true;
+                                fi;
+                            od;
+                            if done then
+                                # Freely cancel:
+                                rels[j] := LetterRepAssocWord(
+                                  FamilyObj(exa,AssocWordByLetterRep(rels[j])));
+                            fi;
+                        fi;
+                    od;
+                    rels[i] := [];
+                fi;
+                i := i + 1;
+            od;
+            if done2 then continue; fi;  # go back to the beginning
+        fi;
+
+        # Now the only remaining relators of length 2 are involution
+        # relators, their corresponding gens are in the list invols
+        break;
+    od;
+    
+    # Now we can make an invtab group:
+    Error();
+  end );
+
 # Plan:
 #
-#  Implement generic Poppy
-#  Make finitely presented group into invtab group plus rels
-#  Implement random presentations
 #  Output decent statistics about cancellation
 #  Experiment with product replacement step to improve small cancellation
 #  Experiment with low index

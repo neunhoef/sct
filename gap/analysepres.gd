@@ -123,3 +123,6 @@ DeclareOperation( "CheckT4SmallCancellationCondition", [ IsInvTabGroup ] );
 # returns a counter-witness if the condition is not fulfilled.
 
 DeclareGlobalFunction( "Poppy" );
+
+DeclareGlobalFunction( "AnalyseFpGroup" );
+
