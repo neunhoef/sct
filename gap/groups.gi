@@ -52,3 +52,43 @@ InstallGlobalFunction( RandomFinitePresentationFixedRelatorLength,
     return f/rels;
   end );
 
+InstallGlobalFunction( FreeAbelianGroupPresentation,
+  function(n)
+    local f,gens,i,j,rels;
+    f := FreeGroup(n);
+    gens := GeneratorsOfGroup(f);
+    rels := [];
+    for i in [1..n-1] do
+        for j in [i+1..n] do
+            Add(rels,Comm(gens[i],gens[j]));
+        od;
+    od;
+    return f/rels;
+  end );
+
+InstallGlobalFunction( FundamentalGroupOfClosedOrientableSurface,
+  function(genus)
+    local f,gens,i,rels;
+    f := FreeGroup(2*genus);
+    gens := GeneratorsOfGroup(f);
+    rels := [];
+    for i in [1..genus] do
+        Add(rels,Comm(gens[i],gens[i+genus]));
+    od;
+    return f/rels;
+  end );
+
+InstallGlobalFunction( StrangeFpGroup,
+  function( n )
+    local a,b,f,i,rel;
+    f := FreeGroup("a","b");
+    a := GeneratorsOfGroup(f)[1];
+    b := GeneratorsOfGroup(f)[2];
+    rel := One(f);
+    for i in [1..n] do
+        rel := rel * a;
+        rel := rel * b^i;
+    od;
+    return f/[rel];
+  end );
+

@@ -14,3 +14,7 @@
 
 DeclareGlobalFunction( "OneRelatorQuotientOfModularGroup" );
 DeclareGlobalFunction( "RandomFinitePresentationFixedRelatorLength" );
+DeclareGlobalFunction( "FreeAbelianGroupPresentation" );
+DeclareGlobalFunction( "FundamentalGroupOfClosedOrientableSurface" );
+DeclareGlobalFunction( "StrangeFpGroup" );
+
