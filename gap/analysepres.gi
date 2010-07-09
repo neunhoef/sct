@@ -14,9 +14,10 @@
 #############################################################################
 
 
-InstallGlobalFunction( MakeInverseTableGroup,
+InstallGlobalFunction( InverseTableGroup,
 function( inv, names )
   local r;
+  if not(IsPlistRep(inv)) then inv := 1*inv; fi;  # used for C optimisation
   r := rec( inv := inv, names := names );
   ObjectifyWithAttributes(r,InvTabGroupType,
                           InverseTable, inv,
@@ -52,14 +53,17 @@ InstallMethod( WordName, "for an InvTabGroup and a list",
     return List(w,x->Position(g!.names,x));
   end );
 
-InstallMethod( RotateWord, "for a word and a position in it",
-  [ IsList, IsPosInt ],
-  function( w, pos )
-    local l;
-    if pos = 1 then return ShallowCopy(w); fi;
-    l := Length(w);
-    return Concatenation(w{[pos..l]},w{[1..pos-1]});
-  end );
+if IsBound(RotateWord_C) then
+    InstallGlobalFunction( RotateWord, RotateWord_C);
+else
+    InstallGlobalFunction( RotateWord,
+      function( w, pos )
+        local l;
+        if pos = 1 then return ShallowCopy(w); fi;
+        l := Length(w);
+        return Concatenation(w{[pos..l]},w{[1..pos-1]});
+      end );
+fi;
 
 InstallMethod( ReduceWord, "for an InvTabGroup, a word and a bool",
   [ IsInvTabGroupRep, IsList, IsBool ],
@@ -73,7 +77,7 @@ InstallMethod( ReduceWord, "for an InvTabGroup, a word and a bool",
         Unbind(w2[l]);
         l := l - 1;
       else
-        Add(w2,x);
+        w2[Length(w2)+1] := x;
         l := l + 1;
       fi;
     od;
@@ -99,11 +103,14 @@ InstallMethod( ProductWords, "for an InvTabGroup and two words",
     return ReduceWord(g,Concatenation(w1,w2),false);
   end );
 
-InstallMethod( InverseWord, "for an InvTabGroup and a word",
-  [ IsInvTabGroupRep, IsList ],
-  function(g,w)
-    return Reversed(g!.inv{w});
-  end );
+if not(IsBound(InverseWord_C)) then
+    InstallGlobalFunction( InverseWord,
+      function(g,w)
+        return Reversed(g!.inv{w});
+      end );
+else
+    InstallGlobalFunction( InverseWord, InverseWord_C );
+fi;
 
 InstallMethod( PowerOfWord, "for an InvTabGroup, a word and a positive exp",
   [ IsInvTabGroupRep, IsList, IsPosInt ],
@@ -177,14 +184,17 @@ InstallMethod( RotationReduce, "for an InvTabGroup and a word",
     return RotateWord(w,minrot);
   end );
 
-InstallGlobalFunction( CountCommonPrefix, function(w1,w2)
-  local i;
-  i := 1;
-  while i <= Length(w1) and i <= Length(w2) and w1[i] = w2[i] do
-      i := i + 1;
-  od;
-  return i-1;
-end );
+if not(IsBound(CountCommonPrefix_C)) then
+    InstallGlobalFunction( CountCommonPrefix, function(w1,w2)
+      local i,l;
+      i := 1;
+      l := Minimum(Length(w1),Length(w2));
+      while i <= l and w1[i] = w2[i] do i := i + 1; od;
+      return i-1;
+    end );
+else
+    InstallGlobalFunction( CountCommonPrefix, CountCommonPrefix_C );
+fi;
 
 InstallMethod( DefineRelators, "for an inv tab group and a list of rels",
   [ IsInvTabGroupRep, IsList ],
@@ -435,12 +445,12 @@ InstallMethod( AnglesForNotchTypes, "for an invtab group with relators",
             for j in [1..r] do vals[k*l+j] := v+1; od;
             for j in [r+1..l] do vals[k*l+j] := v; od;
         od;
-        Add(degs,vals);
+        degs[Length(degs)+1] := vals;
     od;
     MakeImmutable(degs);
     degsnotch := EmptyPlist(Length(notch));
     for i in [1..Length(notch)] do
-        Add(degsnotch,RotateWord(degs[relnr[i]],rotnr[i]));
+        degsnotch[Length(degsnotch)+1] := RotateWord(degs[relnr[i]],rotnr[i]);
     od;
     MakeImmutable(degsnotch);
     return degsnotch;
@@ -480,8 +490,8 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
             prev := fail;
             pref := fail;
         fi;
-        Add(prevnext[1],prev);
-        Add(prevnext[3],pref);
+        prevnext[1][i] := prev;
+        prevnext[3][i] := pref;
         # Find the next one if it exists:
         if pos > l then
             next := fail;
@@ -495,23 +505,23 @@ InstallMethod( PrevNextOfInverses, "for an invtab group with relators",
         else
             next := pos;
         fi;
-        Add(prevnext[2],next);
+        prevnext[2][i] := next;
         if next <> fail then
             pref2 := CountCommonPrefix(notch[next],w);
         else
             pref2 := fail;
         fi;
-        Add(prevnext[4],pref2);
+        prevnext[4][i] := pref2;
         if pref = fail then
             if pref2 = fail then
-                Add(prevnext[5],0);
+                prevnext[5][i] := 0;
             else
-                Add(prevnext[5],2);
+                prevnext[5][i] := 2;
             fi;
         elif pref2 = fail or pref >= pref2 then
-            Add(prevnext[5],1);
+            prevnext[5][i] := 1;
         else
-            Add(prevnext[5],2);
+            prevnext[5][i] := 2;
         fi;
     od;
     MakeImmutable(prevnext);
@@ -572,7 +582,7 @@ InstallMethod( CheckMetricSmallCancellationCondition,
                     # Add to critical list:
                     if Length(critical) > 0 and
                        critical[Length(critical)] <> i then
-                        Add(critical,i);
+                        critical[Length(critical)+1] := i;
                     fi;
                 fi;
                 x := Sum(degs[i]{[ll+1-pref..ll]});
@@ -789,7 +799,7 @@ InstallGlobalFunction( Poppy,
               if li[i] = path[1] and sum + li[i+1] < limit and
                  li[i+1] >= first then
                   path[depth+1] := sum + li[i+1];
-                  Add(res,path{[1..depth+1]});
+                  res[Length(res)+1] := path{[1..depth+1]};
                   break;
               fi;
           od;

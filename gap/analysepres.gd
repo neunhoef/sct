@@ -20,7 +20,7 @@ SetInfoLevel( SCT, 2 );
 
 
 # The constructor:
-DeclareGlobalFunction( "MakeInverseTableGroup" );
+DeclareGlobalFunction( "InverseTableGroup" );
 
 
 # The types:
@@ -61,7 +61,7 @@ DeclareProperty( "IsT4SmallCancellation", IsInvTabGroup );
 DeclareOperation( "NameWord", [IsInvTabGroup, IsList] );
 DeclareOperation( "WordName", [IsInvTabGroup, IsList] );
 
-DeclareOperation( "RotateWord", [IsList, IsPosInt] );
+DeclareGlobalFunction( "RotateWord" );
 # This always makes a copy even if the position is 1 for no rotate!
 
 DeclareOperation( "ReduceWord", [IsInvTabGroup, IsList, IsBool] );
@@ -72,7 +72,7 @@ DeclareOperation( "ReduceWord", [IsInvTabGroup, IsList] );
 DeclareOperation( "ProductWords", [IsInvTabGroup, IsList, IsList] );
 # This is simple concatenation followed by (non-cyclically) reduction
 
-DeclareOperation( "InverseWord", [IsInvTabGroup, IsList] );
+DeclareGlobalFunction( "InverseWord" );
 
 DeclareOperation( "PowerOfWord", [IsInvTabGroup, IsList, IsPosInt] );
 # Called with power 1 this does not copy!
