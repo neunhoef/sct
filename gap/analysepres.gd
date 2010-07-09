@@ -20,8 +20,8 @@ SetInfoLevel( SCT, 2 );
 
 
 # The constructor:
-DeclareGlobalFunction( "InverseTableGroup" );
-
+DeclareOperation( "InverseTableGroup", [ IsList, IsList ] );
+DeclareOperation( "InverseTableGroup", [ IsFpGroup ] );
 
 # The types:
 
@@ -124,5 +124,5 @@ DeclareOperation( "CheckT4SmallCancellationCondition", [ IsInvTabGroup ] );
 
 DeclareGlobalFunction( "Poppy" );
 
-DeclareGlobalFunction( "AnalyseFpGroup" );
+DeclareOperation( "AnalyseThis", [ IsInvTabGroup ] );
 

@@ -14,16 +14,17 @@
 #############################################################################
 
 
-InstallGlobalFunction( InverseTableGroup,
-function( inv, names )
-  local r;
-  if not(IsPlistRep(inv)) then inv := 1*inv; fi;  # used for C optimisation
-  r := rec( inv := inv, names := names );
-  ObjectifyWithAttributes(r,InvTabGroupType,
-                          InverseTable, inv,
-                          GeneratorNames, names);
-  return r;
-end);
+InstallMethod( InverseTableGroup, "for two lists",
+  [ IsList, IsList ],
+  function( inv, names )
+    local r;
+    if not(IsPlistRep(inv)) then inv := 1*inv; fi;  # used for C optimisation
+    r := rec( inv := inv, names := names );
+    ObjectifyWithAttributes(r,InvTabGroupType,
+                            InverseTable, inv,
+                            GeneratorNames, names);
+    return r;
+  end);
 
 InstallMethod( ViewObj, "for an InvTabGroup",
   [ IsInvTabGroupRep ],
@@ -837,11 +838,12 @@ InstallGlobalFunction( Poppy,
     return res;
   end );
 
-InstallGlobalFunction( AnalyseFpGroup,
+InstallMethod( InverseTableGroup, "for an fp group",
+  [ IsFpGroup ],
   function( g )
-    local CancelFreely,CyclicallyInvCancel,Translate,circle,done,goup,
-          i,inv,isinvol,itg,j,k,l,links,log,newnames,next,nextinvol,
-          ngens,nrgone,nrinvols,nrpairs,oldnames,re,rel,rels,trans,x,y;
+    local CancelFreely,CyclicallyInvCancel,Translate,done,goup,i,inv,isinvol,
+          itg,j,k,log,newnames,next,nextinvol,ngens,nrgone,nrinvols,nrpairs,
+          oldnames,re,rel,rels,trans,x,y;
 
     CancelFreely := function(word)
       local r,w;
@@ -1082,13 +1084,27 @@ InstallGlobalFunction( AnalyseFpGroup,
         Add(log,"Cyclic reduction found a new relator of length <= 2");
         Info( SCT, 2, "Cyclic reduction found a new relator of length <= 2" );
         Error("we did not expect this to happen");
-        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+        return rec( fpgrp := g, itg := itg, newnames := newnames, rels := rels,
                     result := re, success := false, oldnames := oldnames,
                     log := log );
     fi;
 
+    Add(log,"Created inverse table group.");
+    return rec( fpgrp := g, itg := itg, newnames := newnames, rels := rels,
+                success := true, oldnames := oldnames, log := log );
+  end );
+
+InstallMethod( AnalyseThis, "for an inverse table group",
+  [ IsInvTabGroupRep ],
+  function( itg )
+    local circle,l,links,log,re;
+    if not(HasRelators(itg)) then
+        Error("inverse table group needs relators");
+        return fail;
+    fi;
     # Now we can finally go about analysing this group w.r.t. small
     # cancellation:
+    log := [];
     PowersOfRelators(itg);
     circle := CircleDegrees(itg);
     NotchTypes(itg);
@@ -1098,8 +1114,7 @@ InstallGlobalFunction( AnalyseFpGroup,
     if re.maxlen < 1/6 then
         Add(log,"Found C'(1/6).");
         Info( SCT, 1, "Hurrah: C'(1/6) found!" );
-        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
-                    success := true, oldnames := oldnames,
+        return rec( itg := itg, success := true,
                     msg := "Group is C'(1/6) and T(3)",
                     result := re, log := log );
     fi;
@@ -1108,8 +1123,7 @@ InstallGlobalFunction( AnalyseFpGroup,
         Add(log,"Found T(4).");
         if CheckNonMetricSmallCancellationCondition(itg,4).result then
             Add(log,"Found C(4). hurrah!");
-            return rec( g := g, itg := itg, newnames := newnames, rels := rels,
-                        success := true, oldnames := oldnames,
+            return rec( itg := itg, success := true,
                         msg := "Group is C(4) and T(4)",
                         result := re, log := log );
         fi;
@@ -1118,8 +1132,7 @@ InstallGlobalFunction( AnalyseFpGroup,
     fi;
     if CheckNonMetricSmallCancellationCondition(itg,6).result = true then
         Add(log,"Found C(6). Hurrah!");
-        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
-                    success := true, oldnames := oldnames,
+        return rec( itg := itg, success := true,
                     msg := "Group is C(6) and T(3)",
                     result := re, log := log );
     fi;
@@ -1129,14 +1142,12 @@ InstallGlobalFunction( AnalyseFpGroup,
     l := Poppy(links,circle);
     if Length(l) = 0 then
         Add(log,"Hurrah! Proved LE officer.");
-        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
-                    success := true, oldnames := oldnames,
+        return rec( itg := itg, success := true,
                     msg := "Officer LE works.",
                     result := re, log := log );
     fi;
 
-    return rec( g := g, itg := itg, newnames := newnames, rels := rels,
-                success := false, oldnames := oldnames,
+    return rec( itg := itg, success := false,
                 msg := "No luck.", result := re, log := log );
 
   end );
