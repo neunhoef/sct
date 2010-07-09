@@ -1,6 +1,6 @@
 #############################################################################
 ##
-##  read.g                SCT package
+##  groups.gd              SCT package
 ##                                                               Steve Linton
 ##                                                            Max Neunhoeffer
 ##                                                             Richard Parker
@@ -8,10 +8,9 @@
 ##
 ##  Copyright (C) 2010 by the authors
 ##
-##  Reading the implementation part of the SCT package.
+##  Declaration stuff for group production routines.
 ##
 #############################################################################
 
-ReadPackage("sct","gap/sct.gi");
-ReadPackage("sct","gap/groups.gi");
-ReadPackage("sct","gap/analysepres.gi");
+DeclareGlobalFunction( "OneRelatorQuotientOfModularGroup" );
+DeclareGlobalFunction( "RandomFinitePresentationFixedRelatorLength" );

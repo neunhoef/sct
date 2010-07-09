@@ -27,6 +27,7 @@ if (not IsBound(RotateWord_C) and
 fi;
 
 ReadPackage("sct","gap/sct.gd");
+ReadPackage("sct","gap/groups.gd");
 ReadPackage("sct","gap/analysepres.gd");
 
 ##
