@@ -839,63 +839,116 @@ InstallGlobalFunction( Poppy,
 
 InstallGlobalFunction( AnalyseFpGroup,
   function( g )
-    local LenLex,done,done2,exa,i,invols,j,k,lv,lw,ngens,pos,rels,x,y;
-    LenLex := function(v,w) 
-      local lv,lw;
-      lv := Length(v);
-      lw := Length(w);
-      if lv < lw then return true;
-      elif lv > lw then return false;
-      else return v < w; fi;  # Lexicographic
+    local CancelFreely,CyclicallyInvCancel,Translate,circle,done,goup,
+          i,inv,isinvol,itg,j,k,l,links,log,newnames,next,nextinvol,
+          ngens,nrgone,nrinvols,nrpairs,oldnames,re,rel,rels,trans,x,y;
+
+    CancelFreely := function(word)
+      local r,w;
+      if Length(word) = 0 then return; fi;
+      r := 2;
+      w := 2;
+      while r <= Length(word) do
+          if w >= 2 and word[r] = - word[w-1] then
+              w := w - 1;
+          else
+              word[w] := word[r];
+              w := w + 1;
+          fi;
+          r := r + 1;
+      od;
+      for r in [w..Length(word)] do
+          Unbind(word[r]);
+      od;
+      while Length(word) >= 2 and word[1] = -word[Length(word)] do
+          for r in [1..Length(word)-2] do
+              word[r] := word[r+1];
+          od;
+          Unbind(word[Length(word)]);
+          Unbind(word[Length(word)]);
+      od;
     end;
+
+    CyclicallyInvCancel := function(isinvol,word)
+      local r,w,d;
+      if Length(word) = 0 then return false; fi;
+      r := 2;
+      w := 2;
+      while r <= Length(word) do
+          if w >= 2 and word[w-1] > 0 and isinvol[word[w-1]] and 
+             word[r] = word[w-1] then
+              w := w - 1;
+          else
+              word[w] := word[r];
+              w := w + 1;
+          fi;
+          r := r + 1;
+      od;
+      d := r <> w;
+      for r in [w..Length(word)] do
+          Unbind(word[r]);
+      od;
+      while Length(word) >= 2 and word[1] > 0 and isinvol[word[1]] and
+            word[1] = word[Length(word)] do
+          d := true;
+          for r in [1..Length(word)-2] do
+              word[r] := word[r+1];
+          od;
+          Unbind(word[Length(word)]);
+          Unbind(word[Length(word)]);
+      od;
+      return d;
+    end;
+
     ngens := Length(GeneratorsOfGroup(g));
     rels := List(RelatorsOfFpGroup(g),LetterRepAssocWord);
-    exa := GeneratorsOfGroup(g)[1];
+
+    trans := 1*[1..ngens];    # translation table
+    nrgone := 0;
+    # We maintain that all letters in rels and all values in trans
+    # are *living* gens or their negatives!
     while true do   # will be left by break, continue is used for goto up
-        if Length(rels) = 0 then break; fi;
-        Sort(rels,LenLex);
-        # Forget about relators of length 0:
-        if Length(rels) > 0 and Length(rels[1]) = 0 then
-            pos := First([1..Length(rels)],i->Length(rels[i]) > 0);
-            if pos = fail then
-                rels := [];
-                break;
-            fi;
-            rels := rels{[pos..Length(rels)]};
+        if Length(rels) = 0 then 
+            nrinvols := 0;
+            isinvol := BlistList([],[]);
+            break; 
         fi;
         
-        i := 1;
-        # First take care of relators of length 1:
-        if i <= Length(rels) and Length(rels[i]) = 1 then
-            while i <= Length(rels) and Length(rels[i]) = 1 do
-                x := rels[i][1];
-                for j in [1..Length(rels)] do
-                    rels[j] := Filtered(rels[j],y -> y <> x and y <> -x);
-                od;
-                i := i + 1;
+        # First cyclically cancel all of the relators:
+        for i in [1..Length(rels)] do
+            CancelFreely(rels[i]);
+        od;
+
+        # Now take care of relators of length 1:
+        i := First([1..Length(rels)],i->Length(rels[i]) = 1);
+        if i <> fail then
+            x := AbsoluteValue(rels[i][1]);
+            for j in [1..Length(rels)] do
+                rels[j] := Filtered(rels[j],y -> y <> x and y <> -x);
             od;
+            trans[x] := 0;
+            nrgone := nrgone + 1;
             continue;     # go back to the beginning
         fi;
 
-        # Now take care of relators of length 2:
-        invols := [];
-        if i <= Length(rels) and Length(rels[i]) = 2 then
-            done2 := false;
-            while i <= Length(rels) and Length(rels[i]) = 2 do
+        # Now take care of relators of length 2 ignore involution relations
+        # for now:
+        goup := false;
+        for i in [1..Length(rels)] do
+            if Length(rels[i]) = 2 then
                 if rels[i][1] = - rels[i][2] then
                     rels[i] := [];
-                    done2 := true;
-                elif rels[i][1] = rels[i][2] then
-                    if rels[i][1] > 0 then
-                        Add(invols,rels[i][1]);
-                    else
-                        Add(invols,-rels[i][1]);
-                    fi;
-                else
-                    done2 := true;
+                elif rels[i][1] <> rels[i][2] then
+                    goup := true;
                     x := rels[i][1];
                     y := -rels[i][2];
-                    for j in [1..rels] do
+                    if y < 0 then
+                        x := -x;
+                        y := -y;
+                    fi;
+                    trans[y] := x;
+                    nrgone := nrgone + 1;
+                    for j in [1..Length(rels)] do
                         if j <> i then
                             done := false;
                             for k in [1..Length(rels[j])] do
@@ -907,27 +960,185 @@ InstallGlobalFunction( AnalyseFpGroup,
                                     done := true;
                                 fi;
                             od;
-                            if done then
-                                # Freely cancel:
-                                rels[j] := LetterRepAssocWord(
-                                  FamilyObj(exa,AssocWordByLetterRep(rels[j])));
-                            fi;
+                            if done then CancelFreely(rels[j]); fi;
                         fi;
                     od;
+                    for j in [1..Length(trans)] do
+                        if trans[j] = y then
+                            trans[j] := x;
+                        elif trans[j] = -y then
+                            trans[j] := -x;
+                        fi;
+                    od;
+                    # Now all rels and trans do no longer contain y or -y!
                     rels[i] := [];
                 fi;
-                i := i + 1;
-            od;
-            if done2 then continue; fi;  # go back to the beginning
-        fi;
+            fi;
+        od;
+        if goup then continue; fi;  # go back to the beginning
 
         # Now the only remaining relators of length 2 are involution
-        # relators, their corresponding gens are in the list invols
+        # relators
+
+        # Finally mark and count the involutions:
+        isinvol := BlistList([1..ngens],[]);
+        nrinvols := 0;
+        for i in [1..Length(rels)] do
+            if Length(rels[i]) = 2 then
+                if rels[i][1] <> rels[i][2] then 
+                    Error("cannot have happened");
+                fi;
+                x := AbsoluteValue(rels[i][1]);
+                nrinvols := nrinvols + 1;
+                isinvol[x] := true;
+            fi;
+        od;
+
+        # Now rewrite inverses of involutions and cyclically cancel 
+        # using the involutions:
+        goup := false;
+        for i in [1..Length(rels)] do
+            rel := rels[i];
+            done := false;
+            for j in [1..Length(rel)] do
+                if rel[j] < 0 and isinvol[-rel[j]] then
+                    rel[j] := -rel[j];
+                    done := true;
+                fi;
+            od;
+            if Length(rel) > 2 then
+                if CyclicallyInvCancel(isinvol,rel) then goup := true; fi;
+            fi;
+        od;
+        if goup then continue; fi;
+                
         break;
     od;
     
+    # nrinvols and isinvol is now set
+
     # Now we can make an invtab group:
-    Error();
+    nrpairs := ngens - nrgone - nrinvols;
+    next := 1;
+    nextinvol := 2*nrpairs+1;
+    newnames := EmptyPlist(2*ngens);
+    oldnames := EmptyPlist(2*nrpairs+nrinvols);
+    # First the surviving gens:
+    for i in [1..ngens] do
+        if trans[i] = i then
+            if not(isinvol[i]) then
+                newnames[i] := next;
+                newnames[i+ngens] := next + nrpairs;
+                oldnames[next] := i;
+                oldnames[next+nrpairs] := -i;
+                next := next + 1;
+            else
+                newnames[i] := nextinvol;
+                newnames[i+ngens] := nextinvol;
+                oldnames[nextinvol] := i;
+                nextinvol := nextinvol + 1;
+            fi;
+        fi;
+    od;
+    # Now the renamed ones:
+    for i in [1..ngens] do
+        if trans[i] <> i then
+            if trans[i] > 0 then
+                newnames[i] := newnames[trans[i]];
+                newnames[i+ngens] := newnames[trans[i]+ngens];
+            else
+                newnames[i+ngens] := newnames[-trans[i]];
+                newnames[i] := newnames[-trans[i]+ngens];
+            fi;
+        fi;
+    od;
+    rels := Filtered(rels,r->Length(r) > 2);
+
+    Translate := function(newnames,w)
+      local i,ww;
+      ww := EmptyPlist(Length(w));
+      for i in [1..Length(w)] do
+          if w[i] > 0 then
+              ww[i] := newnames[w[i]];
+          else
+              ww[i] := newnames[-w[i]+ngens];
+          fi;
+      od;
+      return ww;
+    end;
+
+    rels := List(rels,x->Translate(newnames,x));
+
+    inv := Concatenation([nrpairs+1..2*nrpairs],[1..nrpairs],
+                         [2*nrpairs+1..2*nrpairs+nrinvols]);
+    itg := InverseTableGroup(inv,[1..Length(inv)]);
+    for i in [1..Length(rels)] do
+        Add(rels,InverseWord(itg,rels[i]));
+    od;
+
+    log := [];
+    re := DefineRelators(itg,rels);
+    if re <> true then
+        Add(log,"Cyclic reduction found a new relator of length <= 2");
+        Info( SCT, 2, "Cyclic reduction found a new relator of length <= 2" );
+        Error("we did not expect this to happen");
+        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+                    result := re, success := false, oldnames := oldnames,
+                    log := log );
+    fi;
+
+    # Now we can finally go about analysing this group w.r.t. small
+    # cancellation:
+    PowersOfRelators(itg);
+    circle := CircleDegrees(itg);
+    NotchTypes(itg);
+    AnglesForNotchTypes(itg);
+    re := CheckMetricSmallCancellationCondition(itg);
+    # Do we have a classical case?
+    if re.maxlen < 1/6 then
+        Add(log,"Found C'(1/6).");
+        Info( SCT, 1, "Hurrah: C'(1/6) found!" );
+        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+                    success := true, oldnames := oldnames,
+                    msg := "Group is C'(1/6) and T(3)",
+                    result := re, log := log );
+    fi;
+    Add(log,Concatenation("Maximal metric cancellation: ",String(re.maxlen)));
+    if CheckT4SmallCancellationCondition(itg) = true then
+        Add(log,"Found T(4).");
+        if CheckNonMetricSmallCancellationCondition(itg,4).result then
+            Add(log,"Found C(4). hurrah!");
+            return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+                        success := true, oldnames := oldnames,
+                        msg := "Group is C(4) and T(4)",
+                        result := re, log := log );
+        fi;
+    else
+        Add(log,"Is not T(4).");
+    fi;
+    if CheckNonMetricSmallCancellationCondition(itg,6).result = true then
+        Add(log,"Found C(6). Hurrah!");
+        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+                    success := true, oldnames := oldnames,
+                    msg := "Group is C(6) and T(3)",
+                    result := re, log := log );
+    fi;
+
+    links := MaximalEdges(itg);
+    Add(log,"Have maximal edges.");
+    l := Poppy(links,circle);
+    if Length(l) = 0 then
+        Add(log,"Hurrah! Proved LE officer.");
+        return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+                    success := true, oldnames := oldnames,
+                    msg := "Officer LE works.",
+                    result := re, log := log );
+    fi;
+
+    return rec( g := g, itg := itg, newnames := newnames, rels := rels,
+                success := false, oldnames := oldnames,
+                msg := "No luck.", result := re, log := log );
+
   end );
 
 # Plan:
