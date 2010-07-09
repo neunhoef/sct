@@ -814,6 +814,8 @@ InstallGlobalFunction( Poppy,
       od;
     end;
 
+    Info( SCT, 2, "Running poppy..." );
+
     # First collect all directed links in a big list:
     n := Length(links);
     alllinks := EmptyPlist(Sum(links,Length)/2);
@@ -1048,9 +1050,12 @@ InstallMethod( InverseTableGroup, "for an fp group",
             if trans[i] > 0 then
                 newnames[i] := newnames[trans[i]];
                 newnames[i+ngens] := newnames[trans[i]+ngens];
-            else
+            elif trans[i] < 0 then
                 newnames[i+ngens] := newnames[-trans[i]];
                 newnames[i] := newnames[-trans[i]+ngens];
+            else
+                newnames[i] := 0;
+                newnames[i+ngens] := 0;
             fi;
         fi;
     od;
@@ -1079,7 +1084,11 @@ InstallMethod( InverseTableGroup, "for an fp group",
     od;
 
     log := [];
-    re := DefineRelators(itg,rels);
+    if Length(rels) > 0 then
+        re := DefineRelators(itg,rels);
+    else
+        re := true;
+    fi;
     if re <> true then
         Add(log,"Cyclic reduction found a new relator of length <= 2");
         Info( SCT, 2, "Cyclic reduction found a new relator of length <= 2" );
