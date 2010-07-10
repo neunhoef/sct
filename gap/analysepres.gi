@@ -784,16 +784,18 @@ InstallMethod( CheckT4SmallCancellationCondition,
   end );
 
 InstallGlobalFunction( Poppy,
-  function( links, limit )
+  function( links, limit, reslimit )
     # This function gets a directed graph with node set [1..Length(links)]
     # with labels on the links. The graph is given as a list links, and
     # links[i] is a list of length 2*k containing the k neighbours of node i
     # in the form node number followed by label (zipped list).
     # The function tries to find all circuits of length at least 3 in the 
     # graph with label sum less than limit.
+    # The function stops once reslimit circuits have been found.
     local Dowork,alllinks,i,j,li,n,path,res;
-    Dowork := function( path, depth, first, sum, links, limit, res )
+    Dowork := function( path, depth, first, sum, links, limit, res, reslim )
       local i,li;
+      if Length(res) >= reslim then return; fi;
       li := links[path[depth]];
       if depth > 2 then   # try to close
           for i in [1,3..Length(li)-1] do
@@ -809,7 +811,7 @@ InstallGlobalFunction( Poppy,
       for i in [1,3..Length(li)-1] do
           if li[i+1] >= first and sum + li[i+1] + first < limit then
               path[depth+1] := li[i];
-              Dowork(path,depth+1,first,sum+li[i+1],links,limit,res);
+              Dowork(path,depth+1,first,sum+li[i+1],links,limit,res,reslim);
           fi;
       od;
     end;
@@ -834,7 +836,7 @@ InstallGlobalFunction( Poppy,
     while i <= Length(alllinks) and alllinks[i][1] * 3 < limit do
         path[1] := alllinks[i][2];
         path[2] := alllinks[i][3];
-        Dowork(path,2,alllinks[i][1],alllinks[i][1],links,limit,res);
+        Dowork(path,2,alllinks[i][1],alllinks[i][1],links,limit,res,reslimit);
         i := i + 1;
     od;
     return res;
@@ -1124,7 +1126,7 @@ InstallMethod( AnalyseThis, "for an inverse table group",
         Add(log,"Found C'(1/6).");
         Info( SCT, 1, "Hurrah: C'(1/6) found!" );
         return rec( itg := itg, success := true,
-                    msg := "Group is C'(1/6) and T(3)",
+                    msg := "C'(1/6)&T(3)",
                     result := re, log := log );
     fi;
     Add(log,Concatenation("Maximal metric cancellation: ",String(re.maxlen)));
@@ -1133,7 +1135,7 @@ InstallMethod( AnalyseThis, "for an inverse table group",
         if CheckNonMetricSmallCancellationCondition(itg,4).result then
             Add(log,"Found C(4). hurrah!");
             return rec( itg := itg, success := true,
-                        msg := "Group is C(4) and T(4)",
+                        msg := "C(4)&T(4)",
                         result := re, log := log );
         fi;
     else
@@ -1142,22 +1144,86 @@ InstallMethod( AnalyseThis, "for an inverse table group",
     if CheckNonMetricSmallCancellationCondition(itg,6).result = true then
         Add(log,"Found C(6). Hurrah!");
         return rec( itg := itg, success := true,
-                    msg := "Group is C(6) and T(3)",
+                    msg := "C(6)&T(3)",
                     result := re, log := log );
     fi;
 
     links := MaximalEdges(itg);
     Add(log,"Have maximal edges.");
-    l := Poppy(links,circle);
+    l := Poppy(links,circle,1);
     if Length(l) = 0 then
         Add(log,"Hurrah! Proved LE officer.");
         return rec( itg := itg, success := true,
-                    msg := "Officer LE works.",
+                    msg := "Officer LE",
                     result := re, log := log );
     fi;
 
     return rec( itg := itg, success := false,
                 msg := "No luck.", result := re, log := log );
+
+  end );
+
+InstallMethod( AnalyseThis, "for an fp group",
+  [ IsFpGroup ],
+  function(g)
+    local a,aa,ab,ct,gens,gg,i,ii,iso,max,ngens,x,y;
+    i := InverseTableGroup(g);
+    if not(HasRelators(i.itg)) then
+        return rec( success := true, result := "IsInvTabGroup", itg := i );
+    fi;
+    ab := AbelianInvariants(g);
+    if not(0 in ab) then
+        ct := CosetTableFromGensAndRels(
+                 GeneratorsOfGroup(FreeGroupOfFpGroup(g)),
+                 RelatorsOfFpGroup(g),[] : max := 1000, silent);
+        if ct <> fail then
+            return rec( success := true, itg := i, result := "ToddCox",
+                        size := Length(ct[1]) );
+        fi;
+    fi;
+    a := AnalyseThis(i.itg);
+    if a.success then
+        return rec( success := true, result := a.msg, itg := i,
+                    analysis := a );
+    fi;
+    if not(0 in ab) then
+        ct := CosetTableFromGensAndRels(
+                 GeneratorsOfGroup(FreeGroupOfFpGroup(g)),
+                 RelatorsOfFpGroup(g),[] : max := 100000, silent);
+        if ct <> fail then
+            return rec( success := true, itg := i, result := "ToddCox",
+                        size := Length(ct[1]) );
+        fi;
+    fi;
+    gens := ShallowCopy(GeneratorsOfGroup(g));
+    ngens := Length(gens);
+    if ngens > 1 then
+        for i in [1..5] do
+            x := Random([1..ngens]);
+            y := Random([1..ngens-1]);
+            if x = y then y := y + 1; fi;
+            if Random([true,false]) then
+                gens[x] := gens[x] * gens[y];
+            else
+                gens[x] := gens[y] * gens[x];
+            fi;
+            iso := IsomorphismFpGroupByGenerators(g,gens);
+            gg := Image(iso);
+            ii := InverseTableGroup(gg);
+            aa := AnalyseThis(ii.itg);
+            if aa.success then
+                return rec( success := true, itg := ii, newgens := gens,
+                            result := Concatenation(aa.msg,"(change of gens)"),
+                            analysis := aa );
+            fi;
+        od;
+    fi;
+    # Try low index here...
+    if 0 in ab then
+        return rec( success := false, result := "abinvs:infinite" );
+    else
+        return rec( success := false, result := "nothing known" );
+    fi;
 
   end );
 

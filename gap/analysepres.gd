@@ -125,4 +125,5 @@ DeclareOperation( "CheckT4SmallCancellationCondition", [ IsInvTabGroup ] );
 DeclareGlobalFunction( "Poppy" );
 
 DeclareOperation( "AnalyseThis", [ IsInvTabGroup ] );
+DeclareOperation( "AnalyseThis", [ IsFpGroup ] );
 
