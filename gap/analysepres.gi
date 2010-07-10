@@ -1108,7 +1108,23 @@ InstallMethod( InverseTableGroup, "for an fp group",
 InstallMethod( AnalyseThis, "for an inverse table group",
   [ IsInvTabGroupRep ],
   function( itg )
-    local circle,l,links,log,re;
+    return AnalyseThis( itg, rec( ) );
+  end );
+
+BindGlobal( "AnalyseThisInvTabGroupDefaults",
+  rec( PoppyAll := false,
+  ) );
+
+InstallMethod( AnalyseThis, "for an inverse table group",
+  [ IsInvTabGroupRep, IsRecord ],
+  function( itg, opt )
+    local circle,l,links,log,n,re;
+    # Get default options:
+    for n in RecNames(AnalyseThisInvTabGroupDefaults) do
+        if not(IsBound(opt.(n))) then
+            opt.(n) := AnalyseThisInvTabGroupDefaults.(n);
+        fi;
+    od;
     if not(HasRelators(itg)) then
         Error("inverse table group needs relators");
         return fail;
@@ -1150,7 +1166,13 @@ InstallMethod( AnalyseThis, "for an inverse table group",
 
     links := MaximalEdges(itg);
     Add(log,"Have maximal edges.");
-    l := Poppy(links,circle,1);
+    if opt.PoppyAll = true then
+        l := Poppy(links,circle,infinity);
+    elif opt.PoppyAll = false then
+        l := Poppy(links,circle,1);
+    else
+        l := Poppy(links,circle,opt.PoppyAll);
+    fi;
     if Length(l) = 0 then
         Add(log,"Hurrah! Proved LE officer.");
         return rec( itg := itg, success := true,
@@ -1159,46 +1181,66 @@ InstallMethod( AnalyseThis, "for an inverse table group",
     fi;
 
     return rec( itg := itg, success := false,
-                msg := "No luck.", result := re, log := log );
+                msg := "No luck.", result := re, log := log,
+                poppyresult := l );
 
   end );
 
-InstallMethod( AnalyseThis, "for an fp group",
+InstallMethod( AnalyseThis, "for a finitely presented group",
   [ IsFpGroup ],
-  function(g)
-    local a,aa,ab,ct,gens,gg,i,ii,iso,max,ngens,x,y;
-    i := InverseTableGroup(g);
-    if not(HasRelators(i.itg)) then
-        return rec( success := true, result := "IsInvTabGroup", itg := i );
+  function( itg )
+    return AnalyseThis( itg, rec( ) );
+  end );
+
+BindGlobal( "AnalyseThisFpGroupDefaults",
+  rec( DoTCSmall := true, 
+       DoTCBig := true,
+       NumberGensChange := 5,
+       LowIndex := 20,
+  ) );
+
+InstallMethod( AnalyseThis, "for an fp group and a record",
+  [ IsFpGroup, IsRecord ],
+  function(g,opt)
+    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,itg,l,max,merk,n,ngens,x,y;
+    # Get default options:
+    for n in RecNames(AnalyseThisFpGroupDefaults) do
+        if not(IsBound(opt.(n))) then
+            opt.(n) := AnalyseThisFpGroupDefaults.(n);
+        fi;
+    od;
+    itg := InverseTableGroup(g);
+    if not(HasRelators(itg.itg)) then
+        return rec( success := true, result := "IsInvTabGroup", itg := itg );
     fi;
     ab := AbelianInvariants(g);
-    if not(0 in ab) then
+    if not(0 in ab) and opt.DoTCSmall then
         ct := CosetTableFromGensAndRels(
                  GeneratorsOfGroup(FreeGroupOfFpGroup(g)),
                  RelatorsOfFpGroup(g),[] : max := 1000, silent);
         if ct <> fail then
-            return rec( success := true, itg := i, result := "ToddCox",
+            return rec( success := true, itg := itg, result := "ToddCox",
                         size := Length(ct[1]) );
         fi;
     fi;
-    a := AnalyseThis(i.itg);
+    a := AnalyseThis(itg.itg,opt);
     if a.success then
-        return rec( success := true, result := a.msg, itg := i,
+        return rec( success := true, result := a.msg, itg := itg,
                     analysis := a );
     fi;
-    if not(0 in ab) then
+    if not(0 in ab) and opt.DoTCBig then
         ct := CosetTableFromGensAndRels(
                  GeneratorsOfGroup(FreeGroupOfFpGroup(g)),
                  RelatorsOfFpGroup(g),[] : max := 100000, silent);
         if ct <> fail then
-            return rec( success := true, itg := i, result := "ToddCox",
+            return rec( success := true, itg := itg, result := "ToddCox",
                         size := Length(ct[1]) );
         fi;
     fi;
     gens := ShallowCopy(GeneratorsOfGroup(g));
     ngens := Length(gens);
     if ngens > 1 then
-        for i in [1..5] do
+        for i in [1..opt.NumberGensChange] do
             x := Random([1..ngens]);
             y := Random([1..ngens-1]);
             if x = y then y := y + 1; fi;
@@ -1210,7 +1252,7 @@ InstallMethod( AnalyseThis, "for an fp group",
             iso := IsomorphismFpGroupByGenerators(g,gens);
             gg := Image(iso);
             ii := InverseTableGroup(gg);
-            aa := AnalyseThis(ii.itg);
+            aa := AnalyseThis(ii.itg,opt);
             if aa.success then
                 return rec( success := true, itg := ii, newgens := gens,
                             result := Concatenation(aa.msg,"(change of gens)"),
@@ -1218,8 +1260,31 @@ InstallMethod( AnalyseThis, "for an fp group",
             fi;
         od;
     fi;
+
     # Try low index here...
-    if 0 in ab then
+    inf := false;   # known to be infinite
+    if opt.LowIndex <> false then
+        Info( SCT, 1, "Trying low index subgroups up to ",opt.LowIndex,"..." );
+        l := LowIndexSubgroupsFpGroup(g,TrivialSubgroup(g),opt.LowIndex);
+        merk := opt.LowIndex;
+        opt.LowIndex := false;
+        for i in [1..Length(l)] do
+            h := Image(IsomorphismFpGroup(l[i]));
+            a := AnalyseThis(h,opt);   # call ourselves recursively
+            if a.success then
+                opt.LowIndex := merk;
+                return rec( success := true, itg := itg,
+                   result := Concatenation("LowIndex:",a.result),
+                            lowindex := a );
+            fi;
+            if a.result = "abinvs:infinite" then
+                inf := true;
+            fi;
+        od;
+        opt.LowIndex := merk;
+    fi;
+
+    if 0 in ab or inf then
         return rec( success := false, result := "abinvs:infinite" );
     else
         return rec( success := false, result := "nothing known" );
