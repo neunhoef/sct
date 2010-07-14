@@ -19,18 +19,21 @@ DeclareInfoClass( "SCT" );
 SetInfoLevel( SCT, 2 );
 
 
-# The constructor:
+# The constructors:
 DeclareOperation( "InverseTableGroup", [ IsList, IsList ] );
 DeclareOperation( "InverseTableGroup", [ IsFpGroup ] );
+DeclareOperation( "IsomorphismInverseTableGroup", [ IsFpGroup ] );
+DeclareGlobalFunction( "SCT_FindInvTabPresentation" );
 
 # The types:
 
-BindGlobal("InvTabGroupFamily",NewFamily("InvTabGroupFamily"));
+BindGlobal("InvTabGroupElsFamily",CollectionsFamily(CyclotomicsFamily));
+BindGlobal("InvTabGroupFamily",CollectionsFamily(InvTabGroupElsFamily));
 
-DeclareCategory( "IsInvTabGroup", 
-                 IsComponentObjectRep and IsAttributeStoringRep );
+DeclareCategory( "IsInvTabGroup", IsGroup );
 
-DeclareRepresentation( "IsInvTabGroupRep", IsInvTabGroup,
+DeclareRepresentation( "IsInvTabGroupRep", 
+  IsInvTabGroup and IsComponentObjectRep and IsAttributeStoringRep,
   [ "inv", "names" ] );
 
 InvTabGroupType := NewType(InvTabGroupFamily, IsInvTabGroupRep);
@@ -99,6 +102,9 @@ DeclareGlobalFunction( "HashFunctionForNotchTypes" );
 
 DeclareOperation( "DefineRelators", [IsInvTabGroup, IsList] );
 # This sets the relators, some initial checking is done.
+
+DeclareGlobalFunction( "SCT_MapFpToInvTab" );
+DeclareGlobalFunction( "SCT_MapInvTabToFp" );
 
 DeclareOperation( "CheckMetricSmallCancellationCondition", 
   [ IsInvTabGroup ] );

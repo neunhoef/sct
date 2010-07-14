@@ -207,7 +207,8 @@ InstallMethod( DefineRelators, "for an inv tab group and a list of rels",
     fi;
     Info( SCT, 2, "Analysing individual relators..." );
     # Convenience transformation:
-    if IsStringRep(rels[1]) and IsStringRep(GeneratorNames(g)) then
+    if Length(rels) > 0 and
+       IsStringRep(rels[1]) and IsStringRep(GeneratorNames(g)) then
         rels := List(rels,x->WordName(g,x));
     fi;
     # First analyse each individual relator:
@@ -842,8 +843,7 @@ InstallGlobalFunction( Poppy,
     return res;
   end );
 
-InstallMethod( InverseTableGroup, "for an fp group",
-  [ IsFpGroup ],
+InstallGlobalFunction( SCT_FindInvTabPresentation,
   function( g )
     local CancelFreely,CyclicallyInvCancel,Translate,done,goup,i,inv,isinvol,
           itg,j,k,log,newnames,next,nextinvol,ngens,nrgone,nrinvols,nrpairs,
@@ -926,16 +926,26 @@ InstallMethod( InverseTableGroup, "for an fp group",
         od;
 
         # Now take care of relators of length 1:
-        i := First([1..Length(rels)],i->Length(rels[i]) = 1);
-        if i <> fail then
-            x := AbsoluteValue(rels[i][1]);
-            for j in [1..Length(rels)] do
-                rels[j] := Filtered(rels[j],y -> y <> x and y <> -x);
-            od;
-            trans[x] := 0;
-            nrgone := nrgone + 1;
-            continue;     # go back to the beginning
-        fi;
+        goup := false;
+        for i in [1..Length(rels)] do
+            if Length(rels[i]) = 1 then
+                x := AbsoluteValue(rels[i][1]);
+                Info(SCT,4,"ITG: getting rid of gen ",x," (rel of len 1)...");
+                for j in [1..Length(rels)] do
+                    rels[j] := Filtered(rels[j],y -> y <> x and y <> -x);
+                od;
+                for j in [1..Length(trans)] do
+                    if trans[j] = x then
+                        trans[j] := 0;
+                    elif trans[j] = -x then
+                        trans[j] := 0;
+                    fi;
+                od;
+                nrgone := nrgone + 1;
+                goup := true;
+            fi;
+        od;
+        if goup then continue; fi;    # go back to the beginning
 
         # Now take care of relators of length 2 ignore involution relations
         # for now:
@@ -952,6 +962,7 @@ InstallMethod( InverseTableGroup, "for an fp group",
                         x := -x;
                         y := -y;
                     fi;
+                    Info(SCT,4,"ITG: replacing gen ",y," by gen ",x,"...");
                     trans[y] := x;
                     nrgone := nrgone + 1;
                     for j in [1..Length(rels)] do
@@ -995,10 +1006,13 @@ InstallMethod( InverseTableGroup, "for an fp group",
                     Error("cannot have happened");
                 fi;
                 x := AbsoluteValue(rels[i][1]);
-                nrinvols := nrinvols + 1;
-                isinvol[x] := true;
+                if not(isinvol[x]) then
+                    nrinvols := nrinvols + 1;
+                    isinvol[x] := true;
+                fi;
             fi;
         od;
+        Info(SCT,4,"Have found ",nrinvols," involutions.");
 
         # Now rewrite inverses of involutions and cyclically cancel 
         # using the involutions:
@@ -1016,7 +1030,10 @@ InstallMethod( InverseTableGroup, "for an fp group",
                 if CyclicallyInvCancel(isinvol,rel) then goup := true; fi;
             fi;
         od;
-        if goup then continue; fi;
+        if goup then 
+            Info(SCT,4,"Something cancelled using involutions, going up...");
+            continue; 
+        fi;
                 
         break;
     od;
@@ -1027,20 +1044,18 @@ InstallMethod( InverseTableGroup, "for an fp group",
     nrpairs := ngens - nrgone - nrinvols;
     next := 1;
     nextinvol := 2*nrpairs+1;
-    newnames := EmptyPlist(2*ngens);
+    newnames := EmptyPlist(ngens);
     oldnames := EmptyPlist(2*nrpairs+nrinvols);
     # First the surviving gens:
     for i in [1..ngens] do
         if trans[i] = i then
             if not(isinvol[i]) then
                 newnames[i] := next;
-                newnames[i+ngens] := next + nrpairs;
                 oldnames[next] := i;
                 oldnames[next+nrpairs] := -i;
                 next := next + 1;
             else
                 newnames[i] := nextinvol;
-                newnames[i+ngens] := nextinvol;
                 oldnames[nextinvol] := i;
                 nextinvol := nextinvol + 1;
             fi;
@@ -1051,59 +1066,164 @@ InstallMethod( InverseTableGroup, "for an fp group",
         if trans[i] <> i then
             if trans[i] > 0 then
                 newnames[i] := newnames[trans[i]];
-                newnames[i+ngens] := newnames[trans[i]+ngens];
             elif trans[i] < 0 then
-                newnames[i+ngens] := newnames[-trans[i]];
                 newnames[i] := newnames[-trans[i]+ngens];
             else
                 newnames[i] := 0;
-                newnames[i+ngens] := 0;
             fi;
         fi;
     od;
     rels := Filtered(rels,r->Length(r) > 2);
 
-    Translate := function(newnames,w)
-      local i,ww;
+    Translate := function(itg,newnames,w)
+      local i,ww,x;
       ww := EmptyPlist(Length(w));
       for i in [1..Length(w)] do
           if w[i] > 0 then
-              ww[i] := newnames[w[i]];
+              x := newnames[w[i]];
+              if x <> 0 then
+                  ww[Length(ww)+1] := x;
+              fi;
           else
-              ww[i] := newnames[-w[i]+ngens];
+              x := newnames[-w[i]];
+              if x <> 0 then
+                  ww[Length(ww)+1] := itg!.inv[x];
+              fi;
           fi;
       od;
       return ww;
     end;
 
-    rels := List(rels,x->Translate(newnames,x));
-
     inv := Concatenation([nrpairs+1..2*nrpairs],[1..nrpairs],
                          [2*nrpairs+1..2*nrpairs+nrinvols]);
     itg := InverseTableGroup(inv,[1..Length(inv)]);
+    rels := List(rels,x->Translate(itg,newnames,x));
+
     for i in [1..Length(rels)] do
         Add(rels,InverseWord(itg,rels[i]));
     od;
 
-    log := [];
-    if Length(rels) > 0 then
-        re := DefineRelators(itg,rels);
-    else
-        re := true;
-    fi;
+    re := DefineRelators(itg,rels);
     if re <> true then
-        Add(log,"Cyclic reduction found a new relator of length <= 2");
         Info( SCT, 2, "Cyclic reduction found a new relator of length <= 2" );
         Error("we did not expect this to happen");
         return rec( fpgrp := g, itg := itg, newnames := newnames, rels := rels,
-                    result := re, success := false, oldnames := oldnames,
-                    log := log );
+                    result := re, success := false, oldnames := oldnames );
     fi;
 
-    Add(log,"Created inverse table group.");
     return rec( fpgrp := g, itg := itg, newnames := newnames, rels := rels,
-                success := true, oldnames := oldnames, log := log );
+                success := true, oldnames := oldnames );
   end );
+
+InstallGlobalFunction( SCT_MapFpToInvTab,
+  function( data, x )
+    local i,itg,newnames,nrgensfp,w,ww,y;
+    w := LetterRepAssocWord(UnderlyingElement(x));
+    ww := EmptyPlist(Length(w));
+    newnames := data.newnames;
+    nrgensfp := data.nrgensfp;
+    itg := data.itg;
+    for i in [1..Length(w)] do
+        if w[i] > 0 then
+            y := newnames[w[i]];
+            if x <> 0 then
+                ww[Length(ww)+1] := y;
+            fi;
+        else
+            y := newnames[-w[i]];
+            if y <> 0 then
+                ww[Length(ww)+1] := itg!.inv[y];
+            fi;
+        fi;
+    od;
+    return ww;
+  end );
+
+InstallGlobalFunction( SCT_MapInvTabToFp,
+  function( data, x )
+    return ElementOfFpGroup(data.fpfam,
+                            AssocWordByLetterRep(data.freefam,
+                                                 data.oldnames{x}));
+  end );
+
+InstallMethod( IsomorphismInverseTableGroup, "for an fp group",
+  [ IsFpGroup ],
+  function( g )
+    local iso,itg;
+    itg := SCT_FindInvTabPresentation(g);
+    iso := GroupHomByFuncWithData(g,itg.itg,SCT_MapFpToInvTab,
+                                  SCT_MapInvTabToFp,
+            rec( fp := g, itg := itg.itg,
+                 newnames := itg.newnames, oldnames := itg.oldnames,
+                 nrgensfp := Length(itg.newnames),
+                 fpfam := ElementsFamily(FamilyObj(g)),
+                 freefam := ElementsFamily(FamilyObj(FreeGroupOfFpGroup(g)))));
+    return iso;
+  end );
+
+InstallMethod( IsomorphismFpGroup, "for an inv tab group",
+  [ IsInvTabGroupRep ],
+  function( itg )
+    local f,fam,fp,i,invols,iso,newnames,nrgens,oldnames,rank,rels;
+    nrgens := Length(itg!.inv);
+    invols := [];
+    rank := 0;
+    oldnames := EmptyPlist(nrgens);
+    newnames := [];
+    for i in [1..nrgens] do
+        if itg!.inv[i] = i then
+            Add(invols,i);
+            rank := rank + 1;
+            oldnames[i] := rank;
+            newnames[rank] := i;
+        elif itg!.inv[i] > i then
+            rank := rank + 1;
+            oldnames[i] := rank;
+            newnames[rank] := i;
+        else
+            oldnames[i] := -oldnames[itg!.inv[i]];
+        fi;
+    od;
+    f := FreeGroup( rank );
+    fam := ElementsFamily(FamilyObj(f));
+    rels := EmptyPlist(Length(invols)+Length(Relators(itg)));
+    for i in invols do
+        Add(rels,[oldnames[i],oldnames[i]]);
+    od;
+    Append(rels,List(Relators(itg),x->oldnames{x}));
+    for i in [1..Length(rels)] do
+        rels[i] := AssocWordByLetterRep(fam,rels[i]);
+    od;
+    fp := f/rels;
+    iso := GroupHomByFuncWithData(itg,fp,SCT_MapInvTabToFp,SCT_MapFpToInvTab,
+              rec( fp := fp, itg := itg, 
+              newnames := newnames, oldnames := oldnames,
+              nrgensfp := rank,
+              fpfam := ElementsFamily(FamilyObj(fp)),
+              freefam := fam ));
+    return iso;
+  end );
+
+TestFpGroup := function( iso, fp )
+  local epi,fam,g,gens,i,rels;
+  gens := GeneratorsOfGroup(fp);
+  for i in [Length(iso),Length(iso)-1..1] do
+      gens := List(gens,x->PreImageElm(iso[i],x));
+  od;
+  g := GroupWithGenerators(gens);
+  rels := RelatorsOfFpGroup(fp);
+  rels := List(rels,LetterRepAssocWord);
+  epi := EpimorphismFromFreeGroup(g);
+  fam := ElementsFamily(FamilyObj(Source(epi)));
+  rels := List(rels,x->AssocWordByLetterRep(fam,x));
+  rels := List(rels,x->ImageElm(epi,x));
+  if ForAll(rels,IsOne) then 
+      return true;
+  else
+      Error();
+      return rels;
+  fi;
+end;
 
 InstallMethod( AnalyseThis, "for an inverse table group",
   [ IsInvTabGroupRep ],
