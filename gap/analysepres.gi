@@ -1322,16 +1322,18 @@ BindGlobal( "AnalyseThisFpGroupDefaults",
 InstallMethod( AnalyseThis, "for an fp group and a record",
   [ IsFpGroup, IsRecord ],
   function(g,opt)
-    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,itg,l,max,merk,n,ngens,x,y;
+    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,isoitg,itg,l,max,merk,n,ngens,x,y;
     # Get default options:
     for n in RecNames(AnalyseThisFpGroupDefaults) do
         if not(IsBound(opt.(n))) then
             opt.(n) := AnalyseThisFpGroupDefaults.(n);
         fi;
     od;
-    itg := InverseTableGroup(g);
-    if not(HasRelators(itg.itg)) then
-        return rec( success := true, result := "IsInvTabGroup", itg := itg );
+    isoitg := IsomorphismInverseTableGroup(g);
+    itg := Image(isoitg);
+    if not(HasRelators(itg)) then
+        return rec( success := true, result := "IsInvTabGroup", itg := itg,
+                    isotoitg := isoitg );
     fi;
     ab := AbelianInvariants(g);
     if not(0 in ab) and opt.DoTCSmall then
@@ -1340,13 +1342,13 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                  RelatorsOfFpGroup(g),[] : max := 1000, silent);
         if ct <> fail then
             return rec( success := true, itg := itg, result := "ToddCox",
-                        size := Length(ct[1]) );
+                        size := Length(ct[1]), isotoitf := isoitg );
         fi;
     fi;
-    a := AnalyseThis(itg.itg,opt);
+    a := AnalyseThis(itg,opt);
     if a.success then
         return rec( success := true, result := a.msg, itg := itg,
-                    analysis := a );
+                    analysis := a, isotoitg := isoitg );
     fi;
     if not(0 in ab) and opt.DoTCBig then
         ct := CosetTableFromGensAndRels(
@@ -1354,7 +1356,7 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                  RelatorsOfFpGroup(g),[] : max := 100000, silent);
         if ct <> fail then
             return rec( success := true, itg := itg, result := "ToddCox",
-                        size := Length(ct[1]) );
+                        size := Length(ct[1]), isotoitg := isoitg );
         fi;
     fi;
     gens := ShallowCopy(GeneratorsOfGroup(g));
@@ -1371,12 +1373,13 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
             fi;
             iso := IsomorphismFpGroupByGenerators(g,gens);
             gg := Image(iso);
-            ii := InverseTableGroup(gg);
-            aa := AnalyseThis(ii.itg,opt);
+            isoitg := IsomorphismInverseTableGroup(gg);
+            ii := Image(isoitg);
+            aa := AnalyseThis(ii,opt);
             if aa.success then
                 return rec( success := true, itg := ii, newgens := gens,
                             result := Concatenation(aa.msg,"(change of gens)"),
-                            analysis := aa );
+                            analysis := aa, isotoitg := isoitg );
             fi;
         od;
     fi;
@@ -1389,13 +1392,14 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
         merk := opt.LowIndex;
         opt.LowIndex := false;
         for i in [1..Length(l)] do
+            
             h := Image(IsomorphismFpGroup(l[i]));
             a := AnalyseThis(h,opt);   # call ourselves recursively
             if a.success then
                 opt.LowIndex := merk;
                 return rec( success := true, itg := itg,
                    result := Concatenation("LowIndex:",a.result),
-                            lowindex := a );
+                            lowindexanalysis := a, lowindexsubgroup := l[i] );
             fi;
             if a.result = "abinvs:infinite" then
                 inf := true;
