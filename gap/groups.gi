@@ -35,6 +35,35 @@ InstallGlobalFunction( OneRelatorQuotientOfModularGroup,
   return f/rels;
 end );
 
+InstallGlobalFunction( BinaryGroupNumber,
+  function( n )
+    local l;
+    l := [];
+    while n > 1 do
+        if IsOddInt(n) then
+            Add(l,2);
+            n := (n-1)/2;
+        else
+            Add(l,1);
+            n := n/2;
+        fi;
+    od;
+    return l;
+  end );
+
+InstallGlobalFunction( GroupNumberBinary,
+  function( l )
+    local i,n;
+    n := 1;
+    for i in [Length(l),Length(l)-1..1] do
+        n := n * 2;
+        if l[i] = 2 then
+            n := n + 1;
+        fi;
+    od;
+    return n;
+  end );
+
 InstallGlobalFunction( RandomFinitePresentationFixedRelatorLength,
   function(ngens, nrels, lrels)
     local f,fam,gens,i,j,rels,w;

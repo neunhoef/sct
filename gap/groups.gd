@@ -13,6 +13,8 @@
 #############################################################################
 
 DeclareGlobalFunction( "OneRelatorQuotientOfModularGroup" );
+DeclareGlobalFunction( "BinaryGroupNumber" );
+DeclareGlobalFunction( "GroupNumberBinary" );
 DeclareGlobalFunction( "RandomFinitePresentationFixedRelatorLength" );
 DeclareGlobalFunction( "FreeAbelianGroupPresentation" );
 DeclareGlobalFunction( "FundamentalGroupOfClosedOrientableSurface" );
