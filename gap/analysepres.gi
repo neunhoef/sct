@@ -1323,9 +1323,10 @@ InstallMethod( AnalyseThis, "for a finitely presented group",
 BindGlobal( "AnalyseThisFpGroupDefaults",
   rec( DoTCSmall := true, 
        DoTCBig := true,
-       NumberGensChange := 5,
-       LowIndex := 20,
-       RunTimeLimit := 60000,
+       NumberGensChange := 10,
+       LowIndex := 18,
+       RunTimeLimit1 := 30000,
+       RunTimeLimit2 := 60000,
   ) );
 
 InstallMethod( AnalyseThis, "for an fp group and a record",
@@ -1377,6 +1378,7 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
     ngens := Length(gens);
     if ngens > 1 then
         for i in [1..opt.NumberGensChange] do
+            if Runtime() - starttime > opt.RunTimeLimit1 then break; fi;
             x := Random([1..ngens]);
             y := Random([1..ngens-1]);
             if x = y then y := y + 1; fi;
@@ -1405,9 +1407,10 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
         Info( SCT, 1, "Trying low index subgroups up to ",opt.LowIndex,"..." );
         l := LowIndexSubgroupsFpGroupIterator(g,TrivialSubgroup(g),
                                               opt.LowIndex);
-        merk := opt.LowIndex;
+        merk := [opt.LowIndex,opt.NumberGensChange];
         opt.LowIndex := false;
-        while Runtime() - starttime <= opt.RunTimeLimit and
+        opt.NumberGensChange := 5;
+        while Runtime() - starttime <= opt.RunTimeLimit2 and
               not(IsDoneIterator(l)) do
             ll := NextIterator(l);
             h := Image(IsomorphismFpGroup(ll));
@@ -1423,7 +1426,8 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                 inf := true;
             fi;
         od;
-        opt.LowIndex := merk;
+        opt.LowIndex := merk[1];
+        opt.NumberGensChange := merk[2];
     fi;
 
     if 0 in ab or inf then
