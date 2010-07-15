@@ -692,7 +692,37 @@ InstallMethod( MaximalEdges, "for an invtab group without relators",
 InstallMethod( MaximalEdges, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function(g)
-    local c,circ,degs,edges,i,j,l,ll,neigh,nind,notch,pos,range,starts,w,wi,ww;
+    MakeMaximalEdges(g,true,infinity);
+    return g!.MaximalEdges;
+  end );
+
+InstallMethod( CriticalPairsOfNotchTypes, 
+  "for an invtab group without relators",
+  [ IsInvTabGroupRep ],
+  function(g)
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( CriticalPairsOfNotchTypes, "for an invtab group with relators",
+  [ IsInvTabGroupRep and HasRelators ],
+  function(g)
+    MakeMaximalEdges(g,true,infinity);
+    return g!.CriticalPairsOfNotchTypes;
+  end );
+
+InstallMethod( MakeMaximalEdges, 
+  "for an invtab group without relators, a boolean and an integer",
+  [ IsInvTabGroupRep, IsBool, IsCyclotomic ],
+  function(g, save, limit)
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( MakeMaximalEdges, 
+  "for an invtab group with relators, a boolean and an integer",
+  [ IsInvTabGroupRep and HasRelators, IsBool, IsCyclotomic ],
+  function( g, save, limit )
+    local c,circ,critical,d,degs,edges,i,j,l,ll,neigh,nind,notch,pos,
+          range,starts,w,wi,ww;
     notch := NotchTypes(g);
     l := Length(notch);
     nind := NotchIndex(g);
@@ -700,8 +730,9 @@ InstallMethod( MaximalEdges, "for an invtab group with relators",
     degs := AnglesForNotchTypes(g);
     circ := CircleDegrees(g);
 
-    Info( SCT, 2, "Making maximal edges..." );
+    Info( SCT, 2, "Making maximal edges and critical pairs..." );
     edges := EmptyPlist(l);
+    critical := [];
     for i in [1..l] do
         w := notch[i];
         ll := Length(w);
@@ -716,15 +747,36 @@ InstallMethod( MaximalEdges, "for an invtab group with relators",
                 if pos = fail then
                     neigh[Length(neigh)+1] := j;
                     c := CountCommonPrefix(wi,notch[j]);
-                    neigh[Length(neigh)+1] := 
-            QuoInt(circ - Sum(degs[i]{[ll+1-c..ll]}) - Sum(degs[j]{[1..c]}),2);
+                    d := QuoInt(circ - Sum(degs[i]{[ll+1-c..ll]}) 
+                                     - Sum(degs[j]{[1..c]}),2);
+                    neigh[Length(neigh)+1] := d;
+                    if d <= 0 then 
+                        Add(critical,[i,j,d]); 
+                        if Length(critical) >= limit then
+                            if save then
+                                return rec( success := false,
+                                            edges := edges, 
+                                            critical := critical );
+                            else
+                                return rec( success := false,
+                                            critical := critical );
+                            fi;
+                        fi;
+                    fi;
                 fi;
             fi;
         od;
-        edges[Length(edges)+1] := neigh;
+        if save then edges[Length(edges)+1] := neigh; fi;
     od;
-    MakeImmutable(edges);
-    return edges;
+    if save then
+        MakeImmutable(edges);
+        MakeImmutable(critical);
+        SetMaximalEdges(g,edges);
+        SetCriticalPairsOfNotchTypes(g,critical);
+        return rec( success := true, edges := edges, critical := critical );
+    else
+        return rec( success := true, critical := critical );
+    fi;
   end );
 
 InstallMethod( IsT4SmallCancellation, "for an invtab group without relators",
@@ -801,7 +853,7 @@ InstallGlobalFunction( Poppy,
       li := links[path[depth]];
       if depth > 2 then   # try to close
           for i in [1,3..Length(li)-1] do
-              if li[i] = path[1] and sum + li[i+1] < limit and
+              if li[i] = path[1] and sum + li[i+1] <= limit and
                  li[i+1] >= first then
                   path[depth+1] := sum + li[i+1];
                   res[Length(res)+1] := path{[1..depth+1]};
@@ -811,7 +863,7 @@ InstallGlobalFunction( Poppy,
       fi;
       # Try to add another link:
       for i in [1,3..Length(li)-1] do
-          if li[i+1] >= first and sum + li[i+1] + first < limit then
+          if li[i+1] >= first and sum + li[i+1] + first <= limit then
               path[depth+1] := li[i];
               Dowork(path,depth+1,first,sum+li[i+1],links,limit,res,reslim);
           fi;
@@ -1226,6 +1278,36 @@ TestFpGroup := function( iso, fp )
   fi;
 end;
 
+InstallMethod( CheckOfficerLE, "for an inverse table group",
+  [ IsInvTabGroupRep ],
+  function( itg )
+    local circle,l,links,res;
+    if not(HasRelators(itg)) then
+        Info(SCT,1,"Officer LE: failure: no relators given");
+        return rec( success := true, msg := "no relators given" );
+    fi;
+
+    PowersOfRelators(itg);
+    circle := CircleDegrees(itg);
+    NotchTypes(itg);
+    AnglesForNotchTypes(itg);
+    res := MakeMaximalEdges(itg,true,1);  # Abort if critical pairs are found
+    if not(res.success) then
+        Info(SCT,1,"Officer LE: failure: critical pairs found");
+        return rec( itg := itg, success := false, 
+                    msg := "Found critical pairs", critical := res.critical );
+    fi;
+    links := MaximalEdges(itg);
+    l := Poppy(links,circle,1);
+    if Length(l) = 0 then
+        Info(SCT,1,"Officer LE: success!");
+        return rec( itg := itg, success := true, msg := "Officer LE works" );
+    fi;
+    Info(SCT,1,"Officer LE: failure: Poppy found non-divergent vertex");
+    return rec( itg := itg, success := false,
+                msg := "No luck.", poppyresult := l );
+  end );
+
 InstallMethod( AnalyseThis, "for an inverse table group",
   [ IsInvTabGroupRep ],
   function( itg )
@@ -1358,7 +1440,8 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                         runtime := Runtime() - starttime );
         fi;
     fi;
-    a := AnalyseThis(itg,opt);
+    #a := AnalyseThis(itg,opt);
+    a := CheckOfficerLE(itg);
     if a.success then
         return rec( success := true, result := a.msg, itg := itg,
                     analysis := a, isotoitg := isoitg,
@@ -1391,7 +1474,8 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
             gg := Image(iso);
             isoitg := IsomorphismInverseTableGroup(gg);
             ii := Image(isoitg);
-            aa := AnalyseThis(ii,opt);
+            # aa := AnalyseThis(ii,opt);
+            aa := CheckOfficerLE(ii);
             if aa.success then
                 return rec( success := true, itg := ii, newgens := gens,
                             result := Concatenation(aa.msg,"(change of gens)"),

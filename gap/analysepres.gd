@@ -56,7 +56,8 @@ DeclareAttribute( "PrevNextOfInverses", IsInvTabGroup );
 DeclareAttribute( "InverseNotchTypes", IsInvTabGroup );
 DeclareAttribute( "StartIndex", IsInvTabGroup );
 DeclareAttribute( "MaximalEdges", IsInvTabGroup );
-DeclareAttribute( "MaximalEdgeIndex", IsInvTabGroup );
+DeclareAttribute( "CriticalPairsOfNotchTypes", IsInvTabGroup );
+DeclareAttribute( "MaximalEdgeIndex", IsInvTabGroup );  # not yet implemented
 DeclareProperty( "IsT4SmallCancellation", IsInvTabGroup );
 
 # The operations:
@@ -128,7 +129,13 @@ DeclareOperation( "CheckT4SmallCancellationCondition", [ IsInvTabGroup ] );
 # This triggers computation of the attribute IsT4SmallCancellation and
 # returns a counter-witness if the condition is not fulfilled.
 
+DeclareOperation( "MakeMaximalEdges", [ IsInvTabGroup, IsBool, IsCyclotomic ] );
+# This triggers the computation of the maximal edges and the critical
+# pairs of notch types.
+
 DeclareGlobalFunction( "Poppy" );
+
+DeclareOperation( "CheckOfficerLE", [ IsInvTabGroup ] );
 
 DeclareOperation( "AnalyseThis", [ IsInvTabGroup ] );
 DeclareOperation( "AnalyseThis", [ IsInvTabGroup, IsRecord ] );
