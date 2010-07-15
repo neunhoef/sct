@@ -4,12 +4,13 @@ good := [];
 bad := [];
 result := [];
 size := [];
+times := [];
 
 todo := [1..10000];
 for k in todo do
     Info(SCT,1,"Doing ",k,"...");
     g := OneRelatorQuotientOfModularGroup(k);
-    a := AnalyseThis(g);
+    a := AnalyseThis(g,rec(LowIndex := false));
     if a.success then
         Add(good,k);
     else
@@ -19,5 +20,6 @@ for k in todo do
     if a.result = "ToddCox" then
         size[k] := a.size;
     fi;
+    times[k] := a.runtime;
     Info(SCT,1,"      ==> ",a.result);
 od;
