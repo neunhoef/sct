@@ -582,7 +582,7 @@ InstallMethod( CheckMetricSmallCancellationCondition,
                 fi;
                 if x >= 1/2 or ll - pref <= 2 then
                     # Add to critical list:
-                    if Length(critical) > 0 and
+                    if Length(critical) = 0 or
                        critical[Length(critical)] <> i then
                         critical[Length(critical)+1] := i;
                     fi;
@@ -692,12 +692,13 @@ InstallMethod( MaximalEdges, "for an invtab group without relators",
 InstallMethod( MaximalEdges, "for an invtab group with relators",
   [ IsInvTabGroupRep and HasRelators ],
   function(g)
-    local c,degs,edges,i,j,l,ll,neigh,nind,notch,pos,range,starts,w,wi,ww;
+    local c,circ,degs,edges,i,j,l,ll,neigh,nind,notch,pos,range,starts,w,wi,ww;
     notch := NotchTypes(g);
     l := Length(notch);
     nind := NotchIndex(g);
     starts := StartIndex(g);
     degs := AnglesForNotchTypes(g);
+    circ := CircleDegrees(g);
 
     Info( SCT, 2, "Making maximal edges..." );
     edges := EmptyPlist(l);
@@ -716,7 +717,7 @@ InstallMethod( MaximalEdges, "for an invtab group with relators",
                     neigh[Length(neigh)+1] := j;
                     c := CountCommonPrefix(wi,notch[j]);
                     neigh[Length(neigh)+1] := 
-            QuoInt(Sum(degs[i]{[ll+1-c..ll]}) + Sum(degs[j]{[1..c]}),2);
+            QuoInt(circ - Sum(degs[i]{[ll+1-c..ll]}) - Sum(degs[j]{[1..c]}),2);
                 fi;
             fi;
         od;
@@ -1062,12 +1063,14 @@ InstallGlobalFunction( SCT_FindInvTabPresentation,
         fi;
     od;
     # Now the renamed ones:
+    inv := Concatenation([nrpairs+1..2*nrpairs],[1..nrpairs],
+                         [2*nrpairs+1..2*nrpairs+nrinvols]);
     for i in [1..ngens] do
         if trans[i] <> i then
             if trans[i] > 0 then
                 newnames[i] := newnames[trans[i]];
             elif trans[i] < 0 then
-                newnames[i] := newnames[-trans[i]+ngens];
+                newnames[i] := inv[newnames[-trans[i]]];
             else
                 newnames[i] := 0;
             fi;
@@ -1094,8 +1097,6 @@ InstallGlobalFunction( SCT_FindInvTabPresentation,
       return ww;
     end;
 
-    inv := Concatenation([nrpairs+1..2*nrpairs],[1..nrpairs],
-                         [2*nrpairs+1..2*nrpairs+nrinvols]);
     itg := InverseTableGroup(inv,[1..Length(inv)]);
     rels := List(rels,x->Translate(itg,newnames,x));
 
@@ -1284,6 +1285,13 @@ InstallMethod( AnalyseThis, "for an inverse table group",
                     result := re, log := log );
     fi;
 
+    if re.maxlen >= 1/2 then
+        Add(log,"Found cancellation of >= 1/2, 1st gear required, giving up.");
+        return rec( itg := itg, success := false,
+                    msg := "No luck (lacking 1st gear).", result := re, 
+                    log := log );
+    fi;
+
     links := MaximalEdges(itg);
     Add(log,"Have maximal edges.");
     if opt.PoppyAll = true then
@@ -1317,23 +1325,26 @@ BindGlobal( "AnalyseThisFpGroupDefaults",
        DoTCBig := true,
        NumberGensChange := 5,
        LowIndex := 20,
+       RunTimeLimit := 60000,
   ) );
 
 InstallMethod( AnalyseThis, "for an fp group and a record",
   [ IsFpGroup, IsRecord ],
   function(g,opt)
-    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,isoitg,itg,l,max,merk,n,ngens,x,y;
+    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,isoitg,itg,l,ll,max,merk,n,ngens,
+          starttime,x,y;
     # Get default options:
     for n in RecNames(AnalyseThisFpGroupDefaults) do
         if not(IsBound(opt.(n))) then
             opt.(n) := AnalyseThisFpGroupDefaults.(n);
         fi;
     od;
+    starttime := Runtime();
     isoitg := IsomorphismInverseTableGroup(g);
     itg := Image(isoitg);
     if not(HasRelators(itg)) then
         return rec( success := true, result := "IsInvTabGroup", itg := itg,
-                    isotoitg := isoitg );
+                    isotoitg := isoitg, runtime := Runtime() - starttime );
     fi;
     ab := AbelianInvariants(g);
     if not(0 in ab) and opt.DoTCSmall then
@@ -1342,13 +1353,15 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                  RelatorsOfFpGroup(g),[] : max := 1000, silent);
         if ct <> fail then
             return rec( success := true, itg := itg, result := "ToddCox",
-                        size := Length(ct[1]), isotoitf := isoitg );
+                        size := Length(ct[1]), isotoitf := isoitg,
+                        runtime := Runtime() - starttime );
         fi;
     fi;
     a := AnalyseThis(itg,opt);
     if a.success then
         return rec( success := true, result := a.msg, itg := itg,
-                    analysis := a, isotoitg := isoitg );
+                    analysis := a, isotoitg := isoitg,
+                    runtime := Runtime() - starttime );
     fi;
     if not(0 in ab) and opt.DoTCBig then
         ct := CosetTableFromGensAndRels(
@@ -1356,7 +1369,8 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                  RelatorsOfFpGroup(g),[] : max := 100000, silent);
         if ct <> fail then
             return rec( success := true, itg := itg, result := "ToddCox",
-                        size := Length(ct[1]), isotoitg := isoitg );
+                        size := Length(ct[1]), isotoitg := isoitg,
+                        runtime := Runtime() - starttime );
         fi;
     fi;
     gens := ShallowCopy(GeneratorsOfGroup(g));
@@ -1379,7 +1393,8 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
             if aa.success then
                 return rec( success := true, itg := ii, newgens := gens,
                             result := Concatenation(aa.msg,"(change of gens)"),
-                            analysis := aa, isotoitg := isoitg );
+                            analysis := aa, isotoitg := isoitg,
+                            runtime := Runtime() - starttime );
             fi;
         od;
     fi;
@@ -1388,18 +1403,21 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
     inf := false;   # known to be infinite
     if opt.LowIndex <> false then
         Info( SCT, 1, "Trying low index subgroups up to ",opt.LowIndex,"..." );
-        l := LowIndexSubgroupsFpGroup(g,TrivialSubgroup(g),opt.LowIndex);
+        l := LowIndexSubgroupsFpGroupIterator(g,TrivialSubgroup(g),
+                                              opt.LowIndex);
         merk := opt.LowIndex;
         opt.LowIndex := false;
-        for i in [1..Length(l)] do
-            
-            h := Image(IsomorphismFpGroup(l[i]));
+        while Runtime() - starttime <= opt.RunTimeLimit and
+              not(IsDoneIterator(l)) do
+            ll := NextIterator(l);
+            h := Image(IsomorphismFpGroup(ll));
             a := AnalyseThis(h,opt);   # call ourselves recursively
             if a.success then
                 opt.LowIndex := merk;
                 return rec( success := true, itg := itg,
                    result := Concatenation("LowIndex:",a.result),
-                            lowindexanalysis := a, lowindexsubgroup := l[i] );
+                            lowindexanalysis := a, lowindexsubgroup := ll,
+                            runtime := Runtime() - starttime );
             fi;
             if a.result = "abinvs:infinite" then
                 inf := true;
@@ -1409,9 +1427,11 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
     fi;
 
     if 0 in ab or inf then
-        return rec( success := false, result := "abinvs:infinite" );
+        return rec( success := false, result := "abinvs:infinite",
+                    runtime := Runtime() - starttime );
     else
-        return rec( success := false, result := "nothing known" );
+        return rec( success := false, result := "nothing known",
+                    runtime := Runtime() - starttime );
     fi;
 
   end );
