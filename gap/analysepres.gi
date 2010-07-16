@@ -1292,7 +1292,7 @@ InstallMethod( CheckLEOfficer, "for an inverse table group",
         circle := CircleDegrees(itg);
         NotchTypes(itg);
         AnglesForNotchTypes(itg);
-        res := MakeMaximalEdges(itg,true,100);  
+        res := MakeMaximalEdges(itg,true,infinity);  
             # Abort if too many critical pairs are found
         if not(res.success) or Length(CriticalPairsOfNotchTypes(itg)) > 0 then
             Info(SCT,1,"Officer LE: problem: critical pairs found");
@@ -1419,6 +1419,7 @@ InstallMethod( AnalyseThis, "for a finitely presented group",
 BindGlobal( "AnalyseThisFpGroupDefaults",
   rec( DoTCSmall := false, 
        DoTCBig := false,
+       DoLEOfficer := true,
        NumberGensChange := 100,
        LowIndex := 18,
        RunTimeLimit1 := 30000,
@@ -1439,7 +1440,7 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
     starttime := Runtime();
     isoitg := IsomorphismInverseTableGroup(g);
     itg := Image(isoitg);
-    if not(HasRelators(itg)) then
+    if Length(itg!.inv) = 0 or not(HasRelators(itg)) then
         return rec( success := true, result := "IsInvTabGroup", itg := itg,
                     isotoitg := isoitg, runtime := Runtime() - starttime );
     fi;
@@ -1455,11 +1456,13 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
         fi;
     fi;
     #a := AnalyseThis(itg,opt);
-    a := CheckLEOfficer(itg);
-    if a.success then
-        return rec( success := true, result := a.msg, itg := itg,
-                    analysis := a, isotoitg := isoitg,
-                    runtime := Runtime() - starttime );
+    if opt.DoLEOfficer then
+        a := CheckLEOfficer(itg);
+        if a.success then
+            return rec( success := true, result := a.msg, itg := itg,
+                        analysis := a, isotoitg := isoitg,
+                        runtime := Runtime() - starttime );
+        fi;
     fi;
     if not(0 in ab) and opt.DoTCBig then
         ct := CosetTableFromGensAndRels(

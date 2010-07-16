@@ -16,7 +16,9 @@ todo := List(redclasses,x->x[1]);
 for k in todo do
     Info(SCT,1,"Doing ",k,"...");
     g := OneRelatorQuotientOfModularGroup(k);
-    a := AnalyseThis(g,rec(NumberGensChange := 0, LowIndex := false));
+    a := AnalyseThis(g,rec(NumberGensChange := 0, LowIndex := false,
+                           DoTCSmall := true, DoTCBig := true,
+                           DoLEOfficer := false));
     if a.success then
         Add(good,k);
     else
