@@ -147,7 +147,7 @@ InstallGlobalFunction( CompareRotation,
 InstallMethod( NecklaceReduce, "for an InvTabGroup and a word",
   [ IsInvTabGroupRep, IsList ],
   function( g, w )
-    local IsRotationSmaller,i,minrot,minword,wi;
+    local i,minrot,minword,wi;
     w := ReduceWord(g, w, true);   # Cyclically reduce it
     if Length(w) <= 1 then return w; fi;
     # Now find the lexicographically smallest rotated one:
@@ -751,7 +751,7 @@ InstallMethod( MakeMaximalEdges,
                                      - Sum(degs[j]{[1..c]}),2);
                     neigh[Length(neigh)+1] := d;
                     if d <= 0 then 
-                        Add(critical,[i,j,d]); 
+                        Add(critical,[i,j,d,ww]); 
                         if Length(critical) >= limit then
                             if save then
                                 return rec( success := false,
@@ -1278,34 +1278,48 @@ TestFpGroup := function( iso, fp )
   fi;
 end;
 
-InstallMethod( CheckOfficerLE, "for an inverse table group",
+InstallMethod( CheckLEOfficer, "for an inverse table group",
   [ IsInvTabGroupRep ],
   function( itg )
-    local circle,l,links,res;
+    local angle,circle,l,links,newrels,res;
+
     if not(HasRelators(itg)) then
         Info(SCT,1,"Officer LE: failure: no relators given");
         return rec( success := true, msg := "no relators given" );
     fi;
-
-    PowersOfRelators(itg);
-    circle := CircleDegrees(itg);
-    NotchTypes(itg);
-    AnglesForNotchTypes(itg);
-    res := MakeMaximalEdges(itg,true,1);  # Abort if critical pairs are found
-    if not(res.success) then
-        Info(SCT,1,"Officer LE: failure: critical pairs found");
-        return rec( itg := itg, success := false, 
-                    msg := "Found critical pairs", critical := res.critical );
-    fi;
+    while true do  # will be left by break or return
+        PowersOfRelators(itg);
+        circle := CircleDegrees(itg);
+        NotchTypes(itg);
+        AnglesForNotchTypes(itg);
+        res := MakeMaximalEdges(itg,true,100);  
+            # Abort if too many critical pairs are found
+        if not(res.success) or Length(CriticalPairsOfNotchTypes(itg)) > 0 then
+            Info(SCT,1,"Officer LE: problem: critical pairs found");
+            newrels := Concatenation(Relators(itg),
+                                     List(res.critical,x->x[4]));
+            itg := InverseTableGroup(itg!.inv,itg!.names);
+            if DefineRelators(itg,newrels) <> true then
+                return rec( itg := itg, success := false, 
+                            msg := "Found critical pairs, could not add" );
+            fi;
+        else
+            break;   # no critical pairs any more
+        fi;
+    od;
+    Info(SCT,1,"Officer LE: have maximal edges");
     links := MaximalEdges(itg);
-    l := Poppy(links,circle,1);
+    l := Poppy(links,circle,32);
     if Length(l) = 0 then
         Info(SCT,1,"Officer LE: success!");
         return rec( itg := itg, success := true, msg := "Officer LE works" );
     fi;
-    Info(SCT,1,"Officer LE: failure: Poppy found non-divergent vertex");
+    angle := circle - Minimum(List(l,x->x[Length(x)]));
+    Info(SCT,1,"Officer LE: failure: Poppy found non-divergent vertices, ",
+               "worst vertex: ",angle);
     return rec( itg := itg, success := false,
-                msg := "No luck.", poppyresult := l );
+                msg := "No luck.", poppyresult := l,
+                worstvertex := angle );
   end );
 
 InstallMethod( AnalyseThis, "for an inverse table group",
@@ -1403,9 +1417,9 @@ InstallMethod( AnalyseThis, "for a finitely presented group",
   end );
 
 BindGlobal( "AnalyseThisFpGroupDefaults",
-  rec( DoTCSmall := true, 
-       DoTCBig := true,
-       NumberGensChange := 10,
+  rec( DoTCSmall := false, 
+       DoTCBig := false,
+       NumberGensChange := 100,
        LowIndex := 18,
        RunTimeLimit1 := 30000,
        RunTimeLimit2 := 60000,
@@ -1414,8 +1428,8 @@ BindGlobal( "AnalyseThisFpGroupDefaults",
 InstallMethod( AnalyseThis, "for an fp group and a record",
   [ IsFpGroup, IsRecord ],
   function(g,opt)
-    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,isoitg,itg,l,ll,max,merk,n,ngens,
-          starttime,x,y;
+    local a,aa,ab,ct,gens,gg,h,i,ii,inf,iso,isoitg,itg,j,k,l,lgens,ll,
+          max,merk,n,newgens,ngens,starttime;
     # Get default options:
     for n in RecNames(AnalyseThisFpGroupDefaults) do
         if not(IsBound(opt.(n))) then
@@ -1441,7 +1455,7 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
         fi;
     fi;
     #a := AnalyseThis(itg,opt);
-    a := CheckOfficerLE(itg);
+    a := CheckLEOfficer(itg);
     if a.success then
         return rec( success := true, result := a.msg, itg := itg,
                     analysis := a, isotoitg := isoitg,
@@ -1457,25 +1471,34 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                         runtime := Runtime() - starttime );
         fi;
     fi;
-    gens := ShallowCopy(GeneratorsOfGroup(g));
+    gens := GeneratorsOfGroup(g);
     ngens := Length(gens);
     if ngens > 1 then
+        lgens := [gens];
+        i := 1;
+        while i <= Length(lgens) and Length(lgens) < opt.NumberGensChange do
+            for j in [1..ngens] do
+                for k in [1..ngens] do
+                    if j <> k then
+                        newgens := ShallowCopy(lgens[i]);
+                        newgens[j] := newgens[j] * newgens[k];
+                        Add(lgens,newgens);
+                        newgens := ShallowCopy(lgens[i]);
+                        newgens[j] := newgens[k] * newgens[j];
+                        Add(lgens,newgens);
+                    fi;
+                od;
+            od;
+            i := i + 1;
+        od;
         for i in [1..opt.NumberGensChange] do
             if Runtime() - starttime > opt.RunTimeLimit1 then break; fi;
-            x := Random([1..ngens]);
-            y := Random([1..ngens-1]);
-            if x = y then y := y + 1; fi;
-            if Random([true,false]) then
-                gens[x] := gens[x] * gens[y];
-            else
-                gens[x] := gens[y] * gens[x];
-            fi;
-            iso := IsomorphismFpGroupByGenerators(g,gens);
+            iso := IsomorphismFpGroupByGenerators(g,lgens[i]);
             gg := Image(iso);
             isoitg := IsomorphismInverseTableGroup(gg);
             ii := Image(isoitg);
             # aa := AnalyseThis(ii,opt);
-            aa := CheckOfficerLE(ii);
+            aa := CheckLEOfficer(ii);
             if aa.success then
                 return rec( success := true, itg := ii, newgens := gens,
                             result := Concatenation(aa.msg,"(change of gens)"),
@@ -1493,7 +1516,7 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
                                               opt.LowIndex);
         merk := [opt.LowIndex,opt.NumberGensChange];
         opt.LowIndex := false;
-        opt.NumberGensChange := 5;
+        opt.NumberGensChange := 10;
         while Runtime() - starttime <= opt.RunTimeLimit2 and
               not(IsDoneIterator(l)) do
             ll := NextIterator(l);

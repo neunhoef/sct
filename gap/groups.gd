@@ -15,6 +15,7 @@
 DeclareGlobalFunction( "OneRelatorQuotientOfModularGroup" );
 DeclareGlobalFunction( "BinaryGroupNumber" );
 DeclareGlobalFunction( "GroupNumberBinary" );
+DeclareGlobalFunction( "NecklaceReduceBinaryString" );
 DeclareGlobalFunction( "RandomFinitePresentationFixedRelatorLength" );
 DeclareGlobalFunction( "FreeAbelianGroupPresentation" );
 DeclareGlobalFunction( "FundamentalGroupOfClosedOrientableSurface" );

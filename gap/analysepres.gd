@@ -135,7 +135,7 @@ DeclareOperation( "MakeMaximalEdges", [ IsInvTabGroup, IsBool, IsCyclotomic ] );
 
 DeclareGlobalFunction( "Poppy" );
 
-DeclareOperation( "CheckOfficerLE", [ IsInvTabGroup ] );
+DeclareOperation( "CheckLEOfficer", [ IsInvTabGroup ] );
 
 DeclareOperation( "AnalyseThis", [ IsInvTabGroup ] );
 DeclareOperation( "AnalyseThis", [ IsInvTabGroup, IsRecord ] );

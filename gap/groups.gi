@@ -41,10 +41,10 @@ InstallGlobalFunction( BinaryGroupNumber,
     l := [];
     while n > 1 do
         if IsOddInt(n) then
-            Add(l,2);
+            Add(l,1);
             n := (n-1)/2;
         else
-            Add(l,1);
+            Add(l,0);
             n := n/2;
         fi;
     od;
@@ -56,12 +56,32 @@ InstallGlobalFunction( GroupNumberBinary,
     local i,n;
     n := 1;
     for i in [Length(l),Length(l)-1..1] do
-        n := n * 2;
-        if l[i] = 2 then
-            n := n + 1;
-        fi;
+        n := n * 2 + l[i];
     od;
     return n;
+  end );
+
+InstallGlobalFunction( NecklaceReduceBinaryString,
+  function(w)
+    local i,minrot,minword,wi;
+    if Length(w) <= 1 then return w; fi;
+    # Now find the lexicographically smallest rotated one:
+    minrot := 1;
+    for i in [2..Length(w)] do
+      if CompareRotation(w,i,w,minrot) = -1 then
+        minrot := i;
+      fi;
+    od;
+    # Now consider the inverse word:
+    minword := w;
+    wi := 1-Reversed(w);
+    for i in [1..Length(wi)] do
+      if CompareRotation(wi,i,minword,minrot) = -1 then
+        minword := wi;
+        minrot := i;
+      fi;
+    od;
+    return RotateWord(minword,minrot);
   end );
 
 InstallGlobalFunction( RandomFinitePresentationFixedRelatorLength,
