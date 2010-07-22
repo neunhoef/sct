@@ -133,6 +133,11 @@ DeclareOperation( "MakeMaximalEdges", [ IsInvTabGroup, IsBool, IsCyclotomic ] );
 # This triggers the computation of the maximal edges and the critical
 # pairs of notch types.
 
+DeclareOperation( "MakeMaximalEdgesLimited", 
+  [IsInvTabGroup, IsInt, IsInt] );
+# called with (i,a,b), makes all maximal edges which have divergence
+# >= a and < b.
+
 DeclareGlobalFunction( "Poppy" );
 
 DeclareOperation( "CheckLEOfficer", [ IsInvTabGroup ] );

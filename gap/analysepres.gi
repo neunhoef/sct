@@ -779,6 +779,130 @@ InstallMethod( MakeMaximalEdges,
     fi;
   end );
 
+InstallMethod( MakeMaximalEdgesLimited, "for an invtab group and two limits",
+  [ IsInvTabGroupRep, IsInt, IsInt ],
+  function(i, low, high)
+    Error("inverse table group must have relators");
+  end );
+
+InstallMethod( MakeMaximalEdgesLimited, "for an invtab group and two limits",
+  [ IsInvTabGroupRep and HasRelators, IsInt, IsInt ],
+  function(g, low, high)
+    local DoSecondNotch,circ,critical,d,degs,down,edges,i,k,l,ll,neigh,nind,
+          notch,notnr,pos,pows,relnr,rotnr,starts,sum,up,w,wa,wi,ww;
+
+    DoSecondNotch := function(j)
+        # returns true if overlap is too small already
+        local sum1,sum2,c,ii,jj,r,rr;
+        c := CountCommonPrefix(wi,notch[j]);
+        if c < k then return true; fi;
+        ww := Concatenation(w,notch[j]);
+        ww := ReduceWord(g,ww,true);
+        if Length(ww) > 0 then
+            pos := HTValue(nind,ww);
+            if pos = fail then
+                if c > k then
+                    sum1 := Sum(degs[i]{[ll+1-c..ll]});
+                else
+                    sum1 := sum;
+                fi;
+                if sum1 <= circ - low then
+                    sum2 := Sum(degs[j]{[1..c]});
+                    if 2*sum2 <= circ - low then
+                        d := circ - sum1 - sum2;
+                        if low <= d and d < high then
+                            neigh[Length(neigh)+1] := j;
+                            neigh[Length(neigh)+1] := d;
+                            if d <= 0 then 
+                                Add(critical,[i,j,d,ww]); 
+                            fi;
+                            # Now make the reverse edge:
+                            r := relnr[j];
+                            rr := Length(notch[j])/pows[r];
+                            jj := notnr[r][(rotnr[j] - c - 1) mod rr + 1];
+                            r := relnr[i];
+                            rr := Length(notch[i])/pows[r];
+                            ii := notnr[r][(rotnr[i] + c - 1) mod rr + 1];
+                            Add(edges[ii],jj);
+                            Add(edges[ii],d);
+                            # go on testing with 1892 as is
+                        fi;
+                    fi;
+                fi;
+            fi;
+        fi;
+        return false;
+    end;
+
+    pows := PowersOfRelators(g);
+    relnr := RelatorNumbersNotchTypes(g);
+    notnr := NotchNumbersOfRotations(g);
+    rotnr := RotationsOfRelators(g);
+    notch := NotchTypes(g);
+    l := Length(notch);
+    nind := NotchIndex(g);
+    starts := StartIndex(g);
+    degs := AnglesForNotchTypes(g);
+    circ := CircleDegrees(g);
+    if high > circ then high := circ; fi;
+
+    Info( SCT, 2, "Making maximal edges with ", low, "<= div < ", high," ..." );
+    # We are only interested these edges, so 
+    #   low <= circle - sum1 - sum2 < high
+    # where sum1 and sum2 are the contributions of first and second notch,
+    # also we assume sum1 >= sum2.
+    # Thus:
+    #   2*sum1 > circle - high
+    #   2*sum2 <= circle - low
+    #   sum1 <= circle - low
+    edges := List([1..l],i->[]);
+    critical := [];
+    for i in [1..l] do
+      w := notch[i];
+      ll := Length(w);
+      wa := degs[i];
+      k := ll;
+      sum := wa[k];
+      while 2*sum <= circ - high do k := k - 1; sum := sum + wa[k]; od;
+      k := ll+1-k;  # number of letters that must cancel at least!
+      # now sum is the minimal contribution coming from notch[i], this
+      # much (k letters) must cancel at least!
+      wi := InverseWord(g,w);
+      pos := HTValue(nind,wi);
+      if pos <> fail then
+        # we found the inverse notch type, go up and down from there:
+        up := pos-1;
+        down := pos+1;
+      else
+        pos := PositionSorted(notch,wi);
+        up := pos-1;
+        down := pos;
+      fi;
+      neigh := edges[i];
+      while up >= 1 do   # will be left by break if cancellation too small
+        if DoSecondNotch(up) then break; fi;
+        up := up - 1;
+      od;
+      while down <= l do   # will be left by break if cancellation too small
+        if DoSecondNotch(down) then break; fi;
+        down := down + 1;
+      od;
+    od;
+    return rec( edges := edges, critical := critical );
+  end );
+
+limit := function ( l, a, b )
+    local  i, res;
+        res := [  ];
+            for i  in [ 1, 3 .. Length( l ) - 1 ]  do
+                    if l[i + 1] >= a and l[i + 1] < b  then
+                                Add( res, l[i] );
+                                            Add( res, l[i + 1] );
+                                                    fi;
+                                                        od;
+                                                            return res;
+                                                            end;
+
 InstallMethod( IsT4SmallCancellation, "for an invtab group without relators",
   [ IsInvTabGroupRep ],
   function( g )
