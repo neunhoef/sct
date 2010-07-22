@@ -16,3 +16,93 @@ Interessant:
 1816
 1892
 
+========================================================================
+
+1552: Low index does it
+
+gap> GeneratorsOfGroup(g);
+[ S, T ]
+gap> RelatorsOfFpGroup(g);
+[ S^3, T^2, S^2*T*S*T*S*T*S*T*S*T*S^2*T*S*T*S*T*S*T*S*T ]
+# Isomorphism:
+gap> List(GeneratorsOfGroup(g),x->ImageElm(last,x));
+[ [ 1 ], [ 3 ] ]
+gap> InverseTable(i);
+[ 2, 1, 3 ]
+gap> Relators(i);
+[ [ 1, 1, 1 ], 
+  [ 1, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3 ], 
+  [ 2, 2, 2 ], 
+  [ 2, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3 ]
+]
+# Low Index was successful:
+lowindexsubgroup = Group([ T, S*T*S^-1, S^-1*T*S*T*S^-1*T^-1*S ])
+Index is 12
+gap> CosetTable(g,r.lowindexsubgroup);
+[ [ 2, 3, 1, 5, 6, 4, 8, 9, 7, 11, 12, 10 ], 
+  [ 3, 1, 2, 6, 4, 5, 9, 7, 8, 12, 10, 11 ], 
+  [ 1, 2, 4, 3, 5, 7, 6, 10, 9, 8, 11, 12 ], 
+  [ 1, 2, 4, 3, 5, 7, 6, 10, 9, 8, 11, 12 ] ]
+gap> i := r.lowindexanalysis.itg;
+<InverseTableGroup with gens=[ 1 .. 3 ] with 2 relators>
+gap> InverseTable(i);
+[ 1, 2, 3 ]
+gap> Relators(i);
+[ [ 1, 2, 3, 1, 2, 3 ], [ 1, 3, 2, 1, 3, 2 ] ]
+
+
+=========================================================================
+
+1706: Change of generators does it:
+
+gap> g := OneRelatorQuotientOfModularGroup(1706);
+<fp group on the generators [ S, T ]>
+gap> RelatorsOfFpGroup(g);
+[ S^3, T^2, S^2*T*S*T*S^2*T*S*T*S^2*T*S*T*S^2*T*S*T*S^2*T*S*T ]
+gap> iso := IsomorphismFpGroupByGenerators(g,[g.1*g.2^2,g.2]);
+[ S*T^2, T ] -> [ F1, F2 ]
+gap> h := Image(iso);
+<fp group on the generators [ F1, F2 ]>
+gap> RelatorsOfFpGroup(h);
+[ F2^2, F1^-3, F2*F1^-1*F2*F1*F2*F1^-1*F2*F1*F2*F1^-1*F2*F1*F2*F1^-1*F2*F1*
+               F2*F1^-1*F2*F1 ]
+gap> iso := IsomorphismInverseTableGroup(h);
+gap> i := Image(iso);
+<InverseTableGroup with gens=[ 1 .. 3 ] with 3 relators>
+gap> InverseTable(i);
+[ 2, 1, 3 ]
+gap> Relators(i);
+[ [ 2, 2, 2 ], [ 1, 3, 2, 3, 1, 3, 2, 3, 1, 3, 2, 3, 1, 3, 2, 3, 1, 3, 2, 3 ],
+  [ 1, 1, 1 ] ]
+gap> MaximalEdges(i);
+[ [ 4, 222 ], [ 6, 324 ], [ 2, 222 ], [ 5, 324 ], [ 1, 222 ], [ 3, 222 ] ]
+ 
+===========================================================================
+
+1768: Officer LE does not work at first  ==> does not work so far
+
+gap> g := OneRelatorQuotientOfModularGroup(1768);
+<fp group on the generators [ S, T ]>
+gap> iso := IsomorphismInverseTableGroup(g);
+gap> i := Image(iso);
+gap> List(GeneratorsOfGroup(g),x->ImageElm(iso,x));
+[ [ 1 ], [ 3 ] ]
+gap> InverseTable(i);
+[ 2, 1, 3 ]
+gap> Relators(i);
+[ [ 1, 1, 1 ], 
+  [ 1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 3 ],
+  [ 2, 2, 2 ], 
+  [ 2, 2, 3, 2, 2, 3, 2, 2, 3, 2, 3, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2, 2, 3, 2, 3]]
+
+===========================================================================
+
+1816: Officer LE does not work at first ==> does not work so far
+
+===========================================================================
+
+1892: Critical pairs explode number of notch types
+
+===========================================================================
+
+

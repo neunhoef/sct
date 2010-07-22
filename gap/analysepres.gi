@@ -747,8 +747,8 @@ InstallMethod( MakeMaximalEdges,
                 if pos = fail then
                     neigh[Length(neigh)+1] := j;
                     c := CountCommonPrefix(wi,notch[j]);
-                    d := QuoInt(circ - Sum(degs[i]{[ll+1-c..ll]}) 
-                                     - Sum(degs[j]{[1..c]}),2);
+                    d := circ - Sum(degs[i]{[ll+1-c..ll]}) 
+                              - Sum(degs[j]{[1..c]});
                     neigh[Length(neigh)+1] := d;
                     if d <= 0 then 
                         Add(critical,[i,j,d,ww]); 
@@ -1309,14 +1309,14 @@ InstallMethod( CheckLEOfficer, "for an inverse table group",
     od;
     Info(SCT,1,"Officer LE: have maximal edges");
     links := MaximalEdges(itg);
-    l := Poppy(links,circle,32);
+    l := Poppy(links,2*circle,infinity);
     if Length(l) = 0 then
         Info(SCT,1,"Officer LE: success!");
         return rec( itg := itg, success := true, msg := "Officer LE works" );
     fi;
-    angle := circle - Minimum(List(l,x->x[Length(x)]));
-    Info(SCT,1,"Officer LE: failure: Poppy found non-divergent vertices, ",
-               "worst vertex: ",angle);
+    angle := 2*circle - Minimum(List(l,x->x[Length(x)]));
+    Info(SCT,1,"Officer LE: failure: Poppy found non-divergent vertices.");
+    Info(SCT,1,"Curvature of worst vertex (doubled): ",angle);
     return rec( itg := itg, success := false,
                 msg := "No luck.", poppyresult := l,
                 worstvertex := angle );
@@ -1391,11 +1391,11 @@ InstallMethod( AnalyseThis, "for an inverse table group",
     links := MaximalEdges(itg);
     Add(log,"Have maximal edges.");
     if opt.PoppyAll = true then
-        l := Poppy(links,circle,infinity);
+        l := Poppy(links,2*circle,infinity);
     elif opt.PoppyAll = false then
-        l := Poppy(links,circle,1);
+        l := Poppy(links,2*circle,1);
     else
-        l := Poppy(links,circle,opt.PoppyAll);
+        l := Poppy(links,2*circle,opt.PoppyAll);
     fi;
     if Length(l) = 0 then
         Add(log,"Hurrah! Proved LE officer.");
@@ -1503,7 +1503,7 @@ InstallMethod( AnalyseThis, "for an fp group and a record",
             # aa := AnalyseThis(ii,opt);
             aa := CheckLEOfficer(ii);
             if aa.success then
-                return rec( success := true, itg := ii, newgens := gens,
+                return rec( success := true, itg := ii, newgens := lgens[i],
                             result := Concatenation(aa.msg,"(change of gens)"),
                             analysis := aa, isotoitg := isoitg,
                             runtime := Runtime() - starttime );
