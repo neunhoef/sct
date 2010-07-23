@@ -780,79 +780,87 @@ InstallMethod( MakeMaximalEdges,
   end );
 
 InstallMethod( MakeMaximalEdgesLimited, "for an invtab group and two limits",
-  [ IsInvTabGroupRep, IsInt, IsInt ],
-  function(i, low, high)
+  [ IsInvTabGroupRep, IsInt ],
+  function(i, high)
     Error("inverse table group must have relators");
   end );
 
 InstallMethod( MakeMaximalEdgesLimited, "for an invtab group and two limits",
-  [ IsInvTabGroupRep and HasRelators, IsInt, IsInt ],
-  function(g, low, high)
-    # This has a serious problem (see mail to Richard Parker 22 July 2010
-    local DoSecondNotch,circ,critical,d,degs,down,edges,i,k,l,ll,neigh,nind,
-          notch,notnr,pos,pows,relnr,rotnr,starts,sum,up,w,wa,wi,ww;
+  [ IsInvTabGroupRep and HasRelators, IsInt ],
+  function(g, high)
+    local ConsiderMaximalSubEdges,DoSecondNotch,circ,critical,degs,down,
+          edges,i,k,l,ll,neigh,nind,notch,notnr,pos,pows,relnr,rotnr,
+          sum,up,w,wa,wi;
+
+    ConsiderMaximalSubEdges := function(ii,jj,c,d,sum1,sum2)
+        local iii,jjj,kk,r,rr;
+        for kk in [1..c-1] do
+            # Now modify sum1 and sum2 for the next one:
+            sum1 := sum1 - degs[ii][Length(degs[ii])+1-kk];
+            sum2 := sum2 - degs[jj][kk];
+            d := circ - sum1 - sum2;
+            if d >= high then break; fi;
+            # Now make the edge:
+            r := relnr[ii];
+            rr := Length(notnr[r]);
+            iii := notnr[r][(rotnr[ii] - kk - 1) mod rr + 1];
+            r := relnr[jj];
+            rr := Length(notnr[r]);
+            jjj := notnr[r][(rotnr[jj] + kk - 1) mod rr + 1];
+            Add(edges[iii],jjj);
+            Add(edges[iii],d);
+        od;
+    end;
 
     DoSecondNotch := function(j)
       # returns true if overlap is too small already
-      local sum1,sum2,c,ii,jj,kk,r,rr;
+      local c,d,ii,jj,pos,r,rr,sum1,sum2,ww;
       c := CountCommonPrefix(wi,notch[j]);
       if c < k then return true; fi;
+      # If the first letter of notch[i] cancels with the last of notch[j]
+      # we are not interested:
+      if wi[ll] = notch[j][Length(notch[j])] then return false; fi;
+      if c > k then
+          sum1 := Sum(degs[i]{[ll+1-c..ll]});
+      else
+          sum1 := sum;
+      fi;
+      sum2 := Sum(degs[j]{[1..c]});
+      d := circ - sum1 - sum2;
+      if sum1 < sum2 then return false; fi;  # we find it elsewhere
+      if d >= high then return false; fi;    # not interested
+
       ww := Concatenation(w,notch[j]);
       ww := ReduceWord(g,ww,true);
       if Length(ww) > 0 then
-        pos := HTValue(nind,ww);
-        if pos = fail then
-          if c > k then
-            sum1 := Sum(degs[i]{[ll+1-c..ll]});
-          else
-            sum1 := sum;
-          fi;
-          if sum1 <= circ - low then
-            sum2 := Sum(degs[j]{[1..c]});
-            if sum1 >= sum2 and 2*sum2 <= circ - low then
-              d := circ - sum1 - sum2;
-              if low <= d and d < high then
-                neigh[Length(neigh)+1] := j;
-                neigh[Length(neigh)+1] := d;
-                if d <= 0 then 
+          pos := HTValue(nind,ww);
+          if pos = fail then
+              Add(edges[i],j);
+              Add(edges[i],d);
+              if d <= 0 then 
                   Add(critical,[i,j,d,ww]); 
-                fi;
-                # Now make the reverse edges of this edge
-                # and the non-maximal subedges, as long as
-                # they are maximal themselves!
-                if notch[i][1] <> g!.inv[notch[j][Length(notch[j])]] then
-                  # they are maximal, so get on with it
-                  for kk in [c,c-1..1] do
-                    if sum1 > sum2 then  # if sum1 <= sum2 we find it directly!
-                      r := relnr[j];
-                      rr := Length(notch[j])/pows[r];
-                      jj := notnr[r][(rotnr[j] + kk - 1) mod rr + 1];
-                      r := relnr[i];
-                      rr := Length(notch[i])/pows[r];
-                      ii := notnr[r][(rotnr[i] - kk - 1) mod rr + 1];
-                      # A good candidate, however, we have to make sure
-                      # it is not forbidden (a relator can cancel for
-                      # some stretch with its inverse relator in a different
-                      # then "the inverse registration". Then some rotation
-                      # of the two notch types might be forbidden!
-                      ww := Concatenation(notch[jj],notch[ii]);
-                      ww := ReduceWord(g,ww,true);
-                      if Length(ww) <> 0 and HTValue(nind,ww) = fail then
-                        Add(edges[jj],ii);
-                        Add(edges[jj],d);
-                      fi;
-                    fi;
-                    # Now modify sum1 and sum2 for the next one:
-                    sum1 := sum1 - degs[i][Length(degs[i])+1-kk];
-                    sum2 := sum2 - degs[j][kk];
-                    d := circ - sum1 - sum2;
-                    if d >= high then break; fi;
-                  od;
-                fi;
               fi;
-            fi;
+              ConsiderMaximalSubEdges(i,j,c,d,sum1,sum2);
           fi;
-        fi;
+      fi;
+      # Now if sums different make the reverse edge:
+      if sum1 > sum2 then    # if sum1 = sum2 then we find it directly!
+          r := relnr[i];
+          rr := Length(notnr[r]);
+          ii := notnr[r][(rotnr[i] - c - 1) mod rr + 1];
+          r := relnr[j];
+          rr := Length(notnr[r]);
+          jj := notnr[r][(rotnr[j] + c - 1) mod rr + 1];
+          ww := Concatenation(notch[jj],notch[ii]);
+          ww := ReduceWord(g,ww,true);
+          if Length(ww) > 0 then
+              pos := HTValue(nind,ww);
+              if pos = fail then
+                  Add(edges[jj],ii);
+                  Add(edges[jj],d);
+                  ConsiderMaximalSubEdges(jj,ii,c,d,sum2,sum1);
+              fi;
+          fi;
       fi;
       return false;
     end;
@@ -864,20 +872,20 @@ InstallMethod( MakeMaximalEdgesLimited, "for an invtab group and two limits",
     notch := NotchTypes(g);
     l := Length(notch);
     nind := NotchIndex(g);
-    starts := StartIndex(g);
     degs := AnglesForNotchTypes(g);
     circ := CircleDegrees(g);
     if high > circ then high := circ; fi;
 
-    Info( SCT, 2, "Making maximal edges with ", low," <= div < ", high," ..." );
+    Info( SCT, 2, "Making maximal edges with divergence < ", high," ..." );
     # We are only interested these edges, so 
-    #   low <= circle - sum1 - sum2 < high
-    # where sum1 and sum2 are the contributions of first and second notch,
-    # also we assume sum1 >= sum2.
+    #   circle - sum1 - sum2 < high
+    # where sum1 and sum2 are the contributions of first and second notch.
+    # To make them all, we find all maximal edges where the first letter
+    # of the first notch does not cancel with the last letter of the second
+    # notch and we have sum1 >= sum2. Every other maximal edge is a
+    # "subedge" of these or their reversed edge.
     # Thus:
     #   2*sum1 > circle - high
-    #   2*sum2 <= circle - low
-    #   sum1 <= circle - low
     edges := List([1..l],i->[]);
     critical := [];
     for i in [1..l] do

@@ -134,9 +134,9 @@ DeclareOperation( "MakeMaximalEdges", [ IsInvTabGroup, IsBool, IsCyclotomic ] );
 # pairs of notch types.
 
 DeclareOperation( "MakeMaximalEdgesLimited", 
-  [IsInvTabGroup, IsInt, IsInt] );
-# called with (i,a,b), makes all maximal edges which have divergence
-# >= a and < b.
+  [IsInvTabGroup, IsInt] );
+# called with (i,d), makes all maximal edges which have divergence
+# less than d for the invtab group i.
 
 DeclareGlobalFunction( "Poppy" );
 
