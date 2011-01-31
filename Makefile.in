@@ -26,7 +26,7 @@ default: bindir bin/@GAPARCH@/sct.so
 # this target creates a bin-directory
 bindir:
 	if test ! -d bin;  then mkdir bin;  fi
-	if test ! -d bin/@GAPARCH@;  then mkdir bin/@GAPARCH@;  fi
+	if test ! -d bin/@GAPARCH@;  then mkdir -p bin/@GAPARCH@;  fi
 
 bin/@GAPARCH@/sct.so: src/sct.c
 	cp $(GAPPATH)/bin/@GAPARCH@/config.h bin/@GAPARCH@
