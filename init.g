@@ -1,12 +1,13 @@
 #############################################################################
 ##
 ##  init.g                SCT package
+##                                                               Jeff Burdges
 ##                                                               Steve Linton
 ##                                                            Max Neunhoeffer
 ##                                                             Richard Parker
 ##                                                         Colva Roney-Dougal
 ##
-##  Copyright (C) 2010 by the authors
+##  Copyright (C) 2010-2013 by the authors
 ##
 ##  Reading the declaration part of the SCT package.
 ##
@@ -26,9 +27,12 @@ if (not IsBound(RotateWord_C) and
   LoadDynamicModule(Filename(DirectoriesPackagePrograms("sct"), "sct.so"));
 fi;
 
-ReadPackage("sct","gap/sct.gd");
+ReadPackage("sct","gap/tools.gd");
 ReadPackage("sct","gap/groups.gd");
 ReadPackage("sct","gap/analysepres.gd");
+ReadPackage("sct","gap/sct.gd");
+ReadPackage("sct","gap/pongo.gd");
+ReadPackage("sct","gap/tom.gd");
 
 ##
 ##  This program is free software: you can redistribute it and/or modify

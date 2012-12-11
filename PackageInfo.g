@@ -1,12 +1,13 @@
 #############################################################################
 ##  
 ##  PackageInfo.g for the package `leer'
+##                                                               Jeff Burdges
 ##                                                               Steve Linton
 ##                                                            Max Neunhoeffer
 ##                                                             Richard Parker
 ##                                                         Colva Roney-Dougal
 ##
-##  Copyright (C) 2010 by the authors
+##  Copyright (C) 2010-2013 by the authors
 ##
 SetPackageInfo( rec(
 
@@ -169,7 +170,8 @@ PackageDoc := rec(
 
 Dependencies := rec(
   GAP := ">=4.5",
-  NeededOtherPackages := [["GAPDoc", ">= 1.2"], ["orb", ">= 3.4"]],
+  NeededOtherPackages := [["GAPDoc", ">= 1.5.1"], ["io", ">= 4.2"],
+                          ["orb", ">= 4.5"]],
   SuggestedOtherPackages := [],
   ExternalConditions := []
 ),

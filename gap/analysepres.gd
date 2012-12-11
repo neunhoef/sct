@@ -1,12 +1,13 @@
 #############################################################################
 ##
 ##  analysepres.gd              SCT package
+##                                                               Jeff Burdges
 ##                                                               Steve Linton
 ##                                                            Max Neunhoeffer
 ##                                                             Richard Parker
 ##                                                         Colva Roney-Dougal
 ##
-##  Copyright (C) 2010 by the authors
+##  Copyright (C) 2010-2013 by the authors
 ##
 ##  Declaration stuff for a first hack at analysing a presentation
 ##  with respect to small cancellation Declaration part.
@@ -138,7 +139,7 @@ DeclareOperation( "MakeMaximalEdgesLimited",
 # called with (i,d), makes all maximal edges which have divergence
 # less than d for the invtab group i.
 
-DeclareGlobalFunction( "Poppy" );
+DeclareOperation( "Poppy", [IsList, IsInt, IsInt] );
 
 DeclareOperation( "CheckLEOfficer", [ IsInvTabGroup ] );
 

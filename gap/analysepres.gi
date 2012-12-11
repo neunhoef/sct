@@ -1,12 +1,13 @@
 #############################################################################
 ##
 ##  sct.gi           SCT package
+##                                                               Jeff Burdges
 ##                                                               Steve Linton
 ##                                                            Max Neunhoeffer
 ##                                                             Richard Parker
 ##                                                         Colva Roney-Dougal
 ##
-##  Copyright (C) 2010 by the authors
+##  Copyright (C) 2010-2013 by the authors
 ##
 ##  Implementation stuff for a first hack at analysing a presentation
 ##  with respect to small cancellation.
@@ -992,7 +993,8 @@ InstallMethod( CheckT4SmallCancellationCondition,
     fi;
   end );
 
-InstallGlobalFunction( Poppy,
+InstallMethod( Poppy, "for links, limit and reslimit",
+  [ IsList, IsInt, IsInt ],
   function( links, limit, reslimit )
     # This function gets a directed graph with node set [1..Length(links)]
     # with labels on the links. The graph is given as a list links, and
