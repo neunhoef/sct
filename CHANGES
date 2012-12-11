@@ -7,5 +7,6 @@
 ==========================
 
   - Change compilation setup for new GAP 4.5
+  - Add tinyurl URL for package homepage
   - Add pongo/letter functionality
   - Add TOM officer verification
