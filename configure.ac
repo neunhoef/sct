@@ -1,7 +1,7 @@
 AC_PREREQ(2.68)
 LT_PREREQ([2.4.2])
 AC_INIT([sct], 0.2, neunhoef@mcs.st-and.ac.uk)
-AC_CONFIG_SRCDIR([src/src.c])
+AC_CONFIG_SRCDIR([src/sct.c])
 AC_CONFIG_HEADER([src/pkgconfig.h:cnf/pkgconfig.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([cnf])

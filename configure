@@ -575,7 +575,7 @@ PACKAGE_STRING='sct 0.2'
 PACKAGE_BUGREPORT='neunhoef@mcs.st-and.ac.uk'
 PACKAGE_URL=''
 
-ac_unique_file="src/src.c"
+ac_unique_file="src/sct.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
