@@ -12,16 +12,31 @@ SetPackageInfo( rec(
 
 PackageName := "SCT",
 Subtitle := "SCT - Small Cancellation Theory",
-Version := "0.1",
+Version := "0.2",
 ##  Release date of the current version in dd/mm/yyyy format.
 #Date := "20/06/2003",  # not yet released
 ArchiveURL := Concatenation( 
   "http://www-groups.mcs.st-and.ac.uk/~neunhoef/Computer/Software/Gap/",
-  "SCT/sct-0.1"),
+  "SCT/sct-0.2"),
 ArchiveFormats := ".tar.gz",
 #TextFiles := ["init.g", ......],
 BinaryFiles := ["doc/manual.dvi", "doc/manual.pdf"],
 Persons := [
+  rec( 
+    LastName      := "Burdges",
+    FirstNames    := "Jeff",
+    IsAuthor      := true,
+    IsMaintainer  := true,
+    Email         := "burdges@gmail.com",
+    PostalAddress := Concatenation( [
+                       "School of Mathematics and Statistics\n",
+                       "Mathematical Institute\n",
+                       "North Haugh\n",
+                       "St Andrews, Fife KY16 9SS\n",
+                       "Scotland, UK" ] ),
+    Place         := "St Andrews",
+    Institution   := "University of St Andrews"
+  ),
   rec( 
     LastName      := "Linton",
     FirstNames    := "Steve",
@@ -155,7 +170,7 @@ PackageDoc := rec(
 
 
 Dependencies := rec(
-  GAP := ">=4.4",
+  GAP := ">=4.5",
   NeededOtherPackages := [["GAPDoc", ">= 1.2"], ["orb", ">= 3.4"]],
   SuggestedOtherPackages := [],
   ExternalConditions := []
