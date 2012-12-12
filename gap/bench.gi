@@ -46,6 +46,19 @@ MakeBench := function(range,nr)
   return bench;
 end;
 
+AddNumbers := function(bench)
+  local i,j,r;
+  for i in [1..Length(bench)] do
+      if IsBound(bench[i]) then
+          for j in [1..Length(bench[i])] do
+              r := bench[i][j];
+              r.len := i;
+              r.nr := j;
+          od;
+      fi;
+  od;
+end;
+
 AddStrings := function(bench)
   local i,n,r,st;
   for i in [1..Length(bench)] do
