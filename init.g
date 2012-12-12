@@ -33,7 +33,9 @@ ReadPackage("sct","gap/analysepres.gd");
 ReadPackage("sct","gap/sct.gd");
 ReadPackage("sct","gap/pongo.gd");
 ReadPackage("sct","gap/tom.gd");
+ReadPackage("sct","gap/bench.gd");
 
+ReadPackage("sct","gap/SCTbench.g");
 ##
 ##  This program is free software: you can redistribute it and/or modify
 ##  it under the terms of the GNU General Public License as published by

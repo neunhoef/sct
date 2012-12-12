@@ -172,7 +172,7 @@ Dependencies := rec(
   GAP := ">=4.5",
   NeededOtherPackages := [["GAPDoc", ">= 1.5.1"], ["io", ">= 4.2"],
                           ["orb", ">= 4.5"]],
-  SuggestedOtherPackages := [],
+  SuggestedOtherPackages := [["ace", ">= 5.1"]],
   ExternalConditions := []
 ),
 
