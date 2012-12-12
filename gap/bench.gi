@@ -130,9 +130,10 @@ end;
   
 # SCTbench := MakeBench([15..50],15);
 # AddStrings(SCTbench);
+# AddNumbers(SCTbench);
 # AddPrimWord(SCTbench);
 # AddPongoLetterRels(SCTbench);
-# WriteBench(SCTbench);
+# PrintTo("SCTbench.g","SCTbench := ",SCTbench,";\n");
 
 # The following reads additional data about the benchmark groups which
 # has been accumulated in the bench subdirectory:
@@ -197,7 +198,7 @@ PrettyPrintBench := function(bench)
               r := bench[i][j];
               Print(String(j,2),"|",String(r.id,16),"|",
                     String(r.primword,i),"|");
-              if IsBound(r.finite) then
+              if IsBound(r.size) then
                   if r.size < 1000 then
                       Print(String(r.size,3),"|");
                   else
@@ -319,13 +320,14 @@ AddTriesPart := function(bench,i,timeout)
       if not(IsBound(r.infinite)) and not(IsBound(r.finite)) then
           x := Try(r.id,timeout);
           Print("i=",i," j=",j," result: ",x,"\n");
-          if x = "infinite" then r.infinite := true;
+          if x = "infinite" then 
+              AddBenchData(i,j,"infinite",true);
           elif IsInt(x) then 
-              r.size := x;
-              r.finite := x;
+              AddBenchData(i,j,"size",x);
           fi;
       fi;
   od;
+  SaveBenchData();
 end;
 
 AddTries := function(bench,timeout)
@@ -337,7 +339,7 @@ AddTries := function(bench,timeout)
   od;
 end;
 
-TryTomPart := function(bench,i)
+TryTomPart := function(i)
   local invtab,j,pongo,r,res,s;
 
   pongo := CayleyPongo([[1,2,3],[2,3,1],[3,1,2]],1);
@@ -345,13 +347,15 @@ TryTomPart := function(bench,i)
   invtab := PlainInvTab([1]);
   SetElementNames(invtab,"T");
 
-  for j in [1..Length(bench[i])] do
-      r := bench[i][j];
+  for j in [1..Length(SCTbench[i])] do
+      r := SCTbench[i][j];
       s := MakeTomProblem(pongo,invtab,r.rels,[]);
       StartupTom(s);
       res := IterativeGradient(s,100,Yideps,dYideps);
       if res then
-          r.tom := true;
+          AddBenchData(i,j,"tom","ItGrad");
       fi;
   od;
+  SaveBenchData();
 end;
+
