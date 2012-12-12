@@ -146,7 +146,7 @@ InstallGlobalFunction( ReadBenchData,
     for f in files do
         if f[1] <> '.' then
             ff := Filename(dir,f);
-            Print("Reading from file ",ff,"...\n");
+            #Print("Reading from file ",ff,"...\n");
             Read(ff);
         fi;
     od;
@@ -162,7 +162,7 @@ InstallGlobalFunction( SaveBenchData,
     id := Concatenation(IO_gethostname(),"_",
                         String(IO_gettimeofday().tv_sec),"_",
                         String(IO_getpid()),".g");
-    dir := DirectoriesPackageLibrary("sct","bench");
+    dir := DirectoriesPackageLibrary("sct","bench")[1];
     filename := Filename(dir,id);
     for i in [1..Length(NewBenchData)] do
         if IsBound(NewBenchData[i]) then
@@ -182,8 +182,8 @@ InstallGlobalFunction( AddBenchData,
     else
         v := String(value);
     fi;
-    Add(NewBenchData, Concatenation("SCTbench[",String(len),"][",String(j),".",
-                                    key,":=",String(v),";"));
+    Add(NewBenchData, Concatenation("SCTbench[",String(len),"][",String(j),
+                                    "].",key,":=",String(v),";"));
   end );
 
 PrettyPrintBench := function(bench)

@@ -1184,7 +1184,7 @@ GradientApproximateGoodOfficer := function(s,steps,timeout,Y,dY)
   starttime := Runtime();
   if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
       Info(InfoTom,1,"Nothing to do, no poppies or sunflowers!");
-      return;
+      return true;
   fi;
   for i in [1..steps] do
       badness := Badness(s!.allpoppies,s!.allsunflowers,Y);
@@ -1261,7 +1261,7 @@ GradStep := function(s,Y,dY)
   local a,b,badnessa,badnessb,badnessc,c,grad,norm,dist,dist2;
   if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
       Info(InfoTom,1,"Nothing to do, no poppies or sunflowers!");
-      return;
+      return true;
   fi;
   grad := FindGradient(s,s!.allpoppies,s!.allsunflowers,dY);
   badnessa := Badness(s!.allpoppies,s!.allsunflowers,Y);
