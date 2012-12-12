@@ -13,3 +13,7 @@
 ##
 #############################################################################
 
+DeclareGlobalFunction( "ReadBenchData" );
+DeclareGlobalVariable( "NewBenchData" );
+DeclareGlobalFunction( "SaveBenchData" );
+DeclareGlobalFunction( "AddBenchData" );

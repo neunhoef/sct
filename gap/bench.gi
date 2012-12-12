@@ -13,6 +13,8 @@
 ##
 #############################################################################
 
+# Stuff to make the benchmark groups in the first place:
+
 MakeBench := function(range,nr)
   local bench,bytes,f,i,k,l,len,n,st,x;
 
@@ -118,6 +120,57 @@ end;
 # AddPrimWord(SCTbench);
 # AddPongoLetterRels(SCTbench);
 # WriteBench(SCTbench);
+
+# The following reads additional data about the benchmark groups which
+# has been accumulated in the bench subdirectory:
+
+InstallGlobalFunction( ReadBenchData,
+  function()
+    local dir,f,ff,files;
+    dir := DirectoriesPackageLibrary("sct","bench")[1];
+    files := DirectoryContents(dir);
+    for f in files do
+        if f[1] <> '.' then
+            ff := Filename(dir,f);
+            Print("Reading from file ",ff,"...\n");
+            Read(ff);
+        fi;
+    od;
+  end );
+
+ReadBenchData();
+
+InstallValue( NewBenchData, [] );
+
+InstallGlobalFunction( SaveBenchData,
+  function()
+    local dir,filename,i,id,s;
+    id := Concatenation(IO_gethostname(),"_",
+                        String(IO_gettimeofday().tv_sec),"_",
+                        String(IO_getpid()),".g");
+    dir := DirectoriesPackageLibrary("sct","bench");
+    filename := Filename(dir,id);
+    for i in [1..Length(NewBenchData)] do
+        if IsBound(NewBenchData[i]) then
+            s := NewBenchData[i];
+            AppendTo(filename,s,"\n");
+            Unbind(NewBenchData[i]);
+        fi;
+    od;
+  end );
+
+InstallGlobalFunction( AddBenchData,
+  function( len, j, key, value )
+    local v;
+    SCTbench[len][j].(key) := value;
+    if IsStringRep(value) then
+        v := Concatenation("\"",value,"\"");
+    else
+        v := String(value);
+    fi;
+    Add(NewBenchData, Concatenation("SCTbench[",String(len),"][",String(j),".",
+                                    key,":=",String(v),";"));
+  end );
 
 PrettyPrintBench := function(bench)
   local i,j,r;
