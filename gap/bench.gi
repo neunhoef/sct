@@ -408,9 +408,9 @@ TryLEAPart := function(i)
   for j in [1..Length(SCTbench[i])] do
       r := SCTbench[i][j];
       res := RunLEAForOneRelModGrp(r.id,10,3600000);
-      if res = true then
+      if res.res = true then
           AddBenchData(i,j,"lea",true);
-      elif res = false then
+      elif res.res = false then
           AddBenchData(i,j,"lea",false);
       fi;
   od;
