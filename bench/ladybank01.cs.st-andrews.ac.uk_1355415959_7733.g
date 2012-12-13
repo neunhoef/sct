@@ -1,0 +1,10 @@
+SCTbench[39][3].tom:="ItGrad";
+SCTbench[39][4].tom:="ItGrad";
+SCTbench[39][5].tom:="ItGrad";
+SCTbench[39][7].tom:="ItGrad";
+SCTbench[39][8].tom:="ItGrad";
+SCTbench[39][9].tom:="ItGrad";
+SCTbench[39][11].tom:="ItGrad";
+SCTbench[39][13].tom:="ItGrad";
+SCTbench[39][14].tom:="ItGrad";
+SCTbench[39][15].tom:="ItGrad";
