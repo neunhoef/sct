@@ -6,6 +6,9 @@ BINARCHDIR = bin/$(GAPARCH)
 GAPINSTALLLIB = $(abs_top_srcdir)/$(BINARCHDIR)/sct.so
 
 lib_LTLIBRARIES = sct.la
+bin_PROGRAMS = presneck
+
+presneck_SOURCES = src/presneck.c
 
 sct_la_SOURCES = src/sct.c
 sct_la_CPPFLAGS = $(GAP_CPPFLAGS)
@@ -22,6 +25,7 @@ if SYS_IS_CYGWIN
 else
 	cp $(libdir)/sct.so $(GAPINSTALLLIB)
 endif
+	cp presneck $(abs_top_srcdir)/$(BINARCHDIR)
 	@echo "SUCCESS!"
 
 distclean-local:
