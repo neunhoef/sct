@@ -221,6 +221,49 @@ PrettyPrintBench := function(bench)
   od;
 end;
 
+PrettyPrintBench2 := function()
+  local bench,i,j,r;
+  bench := SCTbench;
+  Print("=========================\n");
+  Print(" Benchmark suite for SCT\n");
+  Print("=========================\n");
+  Print("Len|  1|  2|  3|  4|  5|  6|  7|  8|  9| 10| 11| 12| 13| 14| 15\n");
+  Print("---|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL\n");
+  for i in [1..Length(bench)] do
+      if IsBound(bench[i]) then
+          Print(String(i,3));
+          for j in [1..Length(bench[i])] do
+              r := bench[i][j];
+              Print("|");
+              if IsBound(r.size) then
+                  Print("F");
+              elif IsBound(r.infinite) then
+                  Print("I");
+              else
+                  Print("?");
+              fi;
+              if IsBound(r.tom) then
+                  if r.tom = true or r.tom = "ItGrad" then
+                      Print("+");
+                  else 
+                      Print("-"); 
+                  fi;
+              else
+                  Print("?");
+              fi;
+              if IsBound(r.lea) then
+                  if r.lea then Print("+");
+                           else Print("-"); fi;
+              else
+                  Print("?");
+              fi;
+          od;
+          Print("\n");
+      fi;
+  od;
+  Print("\n");
+end;
+
 OneRelatorQuotientOfModularGroupWithFree := function(n)
   local S,T,f,l,rels;
   f := FreeGroup("S","T");
@@ -354,6 +397,21 @@ TryTomPart := function(i)
       res := IterativeGradient(s,100,Yideps,dYideps);
       if res then
           AddBenchData(i,j,"tom","ItGrad");
+      fi;
+  od;
+  SaveBenchData();
+end;
+
+TryLEAPart := function(i)
+  local invtab,j,pongo,r,res,s;
+
+  for j in [1..Length(SCTbench[i])] do
+      r := SCTbench[i][j];
+      res := RunLEAForOneRelModGrp(r.id,10,3600000);
+      if res = true then
+          AddBenchData(i,j,"lea",true);
+      elif res = false then
+          AddBenchData(i,j,"lea",false);
       fi;
   od;
   SaveBenchData();

@@ -146,6 +146,48 @@ MakeRandomPresentation := function(len, nrrels,out)
   od;
 end;
 
+OneRelatorQuotientOfModularGroupForPresneck := function(n,out)
+  local i,l,len,ll,r,rels;
+  rels := [];
+  if n > 1 then
+      l := [];
+      ll := [];
+      while n > 1 do
+          if IsOddInt(n) then
+              Add(l,3);
+              Add(ll,2);
+              n := (n-1)/2;
+          else
+              Add(l,2);
+              Add(ll,3);
+              n := n/2;
+          fi;
+      od;
+      l := Reversed(l);
+      l := LexLeastRotation(l);
+      ll := LexLeastRotation(ll);
+      Add(rels,rec( power := l[2], primword := l[1] ));
+      if l <> ll then
+          Add(rels,rec( power := ll[2], primword := ll[1] ));
+      fi;
+  fi;
+  # Now write the result out:
+  IO_Write(out,"3\n1\n1 2 3\n2 3 1\n3 1 2\n\n1\n1\n\n");
+  IO_Write(out,Length(rels),"\n\n");
+  for r in rels do
+      len := Length(r.primword);
+      IO_Write(out,len," ",r.power,"\n");
+      for i in [1..len] do
+          IO_Write(out,r.primword[i]," ");
+      od;
+      IO_Write(out,"\n");
+      for i in [1..len] do
+          IO_Write(out,"1 ");
+      od;
+      IO_Write(out,"\n\n");
+  od;
+end;
+
 PreparePathClassification := function(r,Amax,Slack)
   # This sets up the S function, the M table and the result table P
   # It also computes P[1] and M[1]
@@ -417,7 +459,7 @@ function(r,flowerlimit,timeout)
                              Length(r.sunflowers) > flowerlimit then
                               Info(InfoLEA,1,"Giving up, have ",
                                    Length(r.sunflowers)," sunflowers.");
-                              return;
+                              return fail;
                           fi;
                       fi;
                       # Now need to add [ee,d] in Y[nn+1]:
@@ -440,9 +482,11 @@ function(r,flowerlimit,timeout)
   od;
   if Length(r.sunflowers) = 0 then
       Info(InfoLEA,1,"Completed sunflower successfully, none found.");
+      return true;
   else
       Info(InfoLEA,1,"Completed sunflower, found ",Length(r.sunflowers),
            " sunflowers.");
+      return false;
   fi;
 end);
 
@@ -455,10 +499,21 @@ MakeModGrpExample := function(len,name)
   Print("Made ",name,".prs\n");
 end;
 
-DoAll := function(name,flowerlimit,timeout)
-  local r,t;
+RunLEAForOneRelModGrp := function(n,flowerlimit,timeout)
+  local dir,nckname,out,presneck,prsname,r,res,t;
+  Info(InfoLEA,1,"Producing presneck input...");
+  dir := DirectoryTemporary();
+  prsname := Filename(dir,"forlea.prs");
+  nckname := Filename(dir,"forlea.nck");
+  dir := DirectoriesPackagePrograms("sct");
+  presneck := Filename(dir,"presneck");
+  out := IO_File(prsname,"w");
+  OneRelatorQuotientOfModularGroupForPresneck(n,out);
+  IO_Close(out);
+  Info(InfoLEA,1,"Calling presneck...");
+  Exec(Concatenation(presneck," ",prsname," ",nckname));
   Info(InfoLEA,1,"Reading input...");
-  r := ReadLEAInput(name);
+  r := ReadLEAInput(nckname);
   Info(InfoLEA,1,"Computing C1...");
   ComputeC1(r);
   Info(InfoLEA,1,"Computing up to 6th power of C1...");
@@ -471,15 +526,12 @@ DoAll := function(name,flowerlimit,timeout)
   Info(InfoLEA,1,"Computed corners in ",Runtime()-t," milliseconds.");
   Info(InfoLEA,1,"Running sunflower...");
   t := Runtime();
-  Sunflower(r,flowerlimit,timeout);
+  res := Sunflower(r,flowerlimit,timeout);
   Info(InfoLEA,1,"Needed ",Runtime()-t," milliseconds for sunflower.");
-  PrintTo(Concatenation(name,".result"),
-          "# Flowerlimit was: ",flowerlimit,"\n",
-          "# Timeout was: ",timeout,"\n",
-          "# Found ",Length(r.sunflowers),
-          " sunflowers, here they are:\n",
-          "sunflowers := ",r.sunflowers,";\n");
-  return r;
+  if res = fail and Length(r.sunflowers) > 0 then
+      res := false;
+  fi;
+  return rec( r := r, res := res, nrsunflowers := Length(r.sunflowers) );
 end;
 
 InstallMethod( ViewObj, "for a LEAsearch object",

@@ -34,6 +34,7 @@ ReadPackage("sct","gap/sct.gd");
 ReadPackage("sct","gap/pongo.gd");
 ReadPackage("sct","gap/tom.gd");
 ReadPackage("sct","gap/bench.gd");
+ReadPackage("sct","gap/lea.gd");
 
 ReadPackage("sct","gap/SCTbench.g");
 ##

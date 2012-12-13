@@ -19,4 +19,5 @@ ReadPackage("sct","gap/analysepres.gi");
 ReadPackage("sct","gap/sct.gi");
 ReadPackage("sct","gap/pongo.gi");
 ReadPackage("sct","gap/tom.gi");
+ReadPackage("sct","gap/lea.gi");
 ReadPackage("sct","gap/bench.gi");
