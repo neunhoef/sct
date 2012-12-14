@@ -244,16 +244,16 @@ PrettyPrintBench2 := function()
               fi;
               if IsBound(r.tom) then
                   if r.tom = true or r.tom = "ItGrad" then
-                      Print("+");
+                      Print("T");
                   else 
-                      Print("-"); 
+                      Print("t"); 
                   fi;
               else
                   Print("?");
               fi;
               if IsBound(r.lea) then
-                  if r.lea then Print("+");
-                           else Print("-"); fi;
+                  if r.lea then Print("L");
+                           else Print("l"); fi;
               else
                   Print("?");
               fi;

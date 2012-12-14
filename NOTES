@@ -8,32 +8,32 @@ schur_4 : FIN/INF 27 limited to 1800 crashed
 ladybank00_0 : top
 ladybank00_1 : Tom29 limited to 20000 flowers
 ladybank00_2 : Tom28 limited to 20000 flowers
-ladybank00_3 : LEA 50,49
+ladybank00_3 :
 ladybank00_4 : Tom27 limited to 20000 flowers
 ladybank00_5 : Tom26 limited to 20000 flowers
 ladybank00_6 : Tom25 limited to 20000 flowers
 
-ladybank01_0 : LEA 48,47
-ladybank01_1 : LEA 46,45
-ladybank01_2 : LEA 44,43
-ladybank01_3 : LEA 42,41
+ladybank01_0 :
+ladybank01_1 :
+ladybank01_2 :
+ladybank01_3 :
 ladybank01_4 : top
 ladybank01_5 : Tom41
-ladybank01_6 : LEA 39,38
-ladybank01_7 : LEA 37,36,35
-ladybank01_8 : Tom34 limited to 20000 flowers
-ladybank01_9 : Tom33 limited to 20000 flowers
+ladybank01_6 :
+ladybank01_7 :
+ladybank01_8 :
+ladybank01_9 :
 ladybank01_10 : Tom32 limited to 20000 flowers
 ladybank01_11 : Tom31 limited to 20000 flowers
-ladybank01_12 : LEA 30-34
-ladybank01_13 : LEA 16-29,40
+ladybank01_12 :
+ladybank01_13 :
 
 
 Tried FIN/INF 1800:
   29 30
 
 Tried TOM:
-  35 36 37 38 39 42 43 44 45 46 47 48 49 50
+  33 34 35 36 37 38 39 42 43 44 45 46 47 48 49 50
 
 Tried LEA:
-  15
+  15 16-29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50

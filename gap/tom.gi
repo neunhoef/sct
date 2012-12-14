@@ -595,6 +595,7 @@ function(r)
         flow.hes := Reversed(flow.hes);
         Add(r!.sunflowers,flow);
         Info(InfoTom,3,"Found sunflower, curvature ",d);
+        if Length(r!.sunflowers) mod 1000 = 0 then Print("O\c"); fi;
     else
         # Now need to add [ee,d] in Y[nn]:
         if not(IsBound(Y[nn])) then Y[nn] := []; fi;
@@ -836,6 +837,9 @@ function(s)
                               Add(poppy.hes,eee);
                               Add(s!.poppies,poppy);
                               found := true;
+                              if Length(s!.poppies) mod 1000 = 0 then
+                                  Print(".\c");
+                              fi;
                               if Length(s!.poppies) > flowerlimit then
                                   Info(InfoTom,1,"Poppy: hit flower limit, ",
                                        "giving up, have ",
@@ -1255,14 +1259,8 @@ end;
 
 #$$$ This function takes the current flower collection and uses one gradient
 # to improve things.
-# We assume that poppy and sunflower have just run with the current
-# exceptions and that those have already been collected.
 GradStep := function(s,Y,dY)
   local a,b,badnessa,badnessb,badnessc,c,grad,norm,dist,dist2;
-  if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
-      Info(InfoTom,1,"Nothing to do, no poppies or sunflowers!");
-      return true;
-  fi;
   grad := FindGradient(s,s!.allpoppies,s!.allsunflowers,dY);
   badnessa := Badness(s!.allpoppies,s!.allsunflowers,Y);
   a := ExportExceptions(s);
@@ -1327,21 +1325,25 @@ GradStep := function(s,Y,dY)
   od;
   ImportExceptions(s,b);
   RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
-  Poppy(s);
-  Sunflower(s);
-  if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
-      Info(InfoTom,1,"Success! No more poppies and sunflowers!");
-      return true;
-  fi;
-  CollectFlowers(s,s!.poppies,s!.sunflowers);
-  return false;
+  return badnessb;
 end;
 
 IterativeGradient := function(s,steps,Y,dY)
-  local i;
+  local badness,i;
+  if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
+      Info(InfoTom,1,"Nothing to do, no poppies or sunflowers!");
+      return true;
+  fi;
   for i in [1..steps] do
       Info(InfoTom,1,"IterativeGradient: step=",i);
-      if GradStep(s,Y,dY) then return true; fi;
+      badness := GradStep(s,Y,dY);
+      Poppy(s);
+      Sunflower(s);
+      if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
+          Info(InfoTom,1,"Success! No more poppies and sunflowers!");
+          return true;
+      fi;
+      CollectFlowers(s,s!.poppies,s!.sunflowers);
   od;
   return false;
 end;
