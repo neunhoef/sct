@@ -1,0 +1,15 @@
+SCTbench[17][1].lea:=false;
+SCTbench[17][2].lea:=false;
+SCTbench[17][3].lea:=false;
+SCTbench[17][4].lea:=false;
+SCTbench[17][5].lea:=false;
+SCTbench[17][6].lea:=false;
+SCTbench[17][7].lea:=false;
+SCTbench[17][8].lea:=false;
+SCTbench[17][9].lea:=false;
+SCTbench[17][10].lea:=false;
+SCTbench[17][11].lea:=false;
+SCTbench[17][12].lea:=false;
+SCTbench[17][13].lea:=false;
+SCTbench[17][14].lea:=false;
+SCTbench[17][15].lea:=false;
