@@ -3,7 +3,7 @@ Who does what currently:
 schur_0 : Tom40
 schur_1 : top
 schur_2 : FIN/INF 28 limited to 1800 crashed
-schur_3 : FIN/INF 27 limited to 1800 crashed
+schur_4 : FIN/INF 27 limited to 1800 crashed
 
 ladybank00_0 : top
 ladybank00_1 : Tom29 limited to 20000 flowers
@@ -26,7 +26,7 @@ ladybank01_9 : Tom33 limited to 20000 flowers
 ladybank01_10 : Tom32 limited to 20000 flowers
 ladybank01_11 : Tom31 limited to 20000 flowers
 ladybank01_12 : LEA 30-34
-ladybank01_13 : LEA 15-29
+ladybank01_13 : LEA 16-29,40
 
 
 Tried FIN/INF 1800:
@@ -36,4 +36,4 @@ Tried TOM:
   35 36 37 38 39 42 43 44 45 46 47 48 49 50
 
 Tried LEA:
-
+  15
