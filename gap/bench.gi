@@ -402,6 +402,26 @@ TryTomPart := function(i)
   SaveBenchData();
 end;
 
+TryTomPart2 := function(i)
+  local invtab,j,pongo,r,res,s;
+
+  pongo := CayleyPongo([[1,2,3],[2,3,1],[3,1,2]],1);
+  SetElementNames(pongo,"1SR");
+  invtab := PlainInvTab([1]);
+  SetElementNames(invtab,"T");
+
+  for j in [1..Length(SCTbench[i])] do
+      r := SCTbench[i][j];
+      s := MakeTomProblem(pongo,invtab,r.rels,[]);
+      StartupTom(s:PoppyLimit := 5000, SunflowerLimit := 1000);
+      res := AnalyseTom(s);
+      if res = true then
+          AddBenchData(i,j,"tom",true);
+      fi;
+  od;
+  SaveBenchData();
+end;
+
 TryLEAPart := function(i)
   local invtab,j,pongo,r,res,s;
 

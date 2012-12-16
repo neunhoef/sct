@@ -446,6 +446,11 @@ InitCornerData := function(s,circle,mode)
   s!.cornhash := HTCreate(fail,rec(hashlen := NextPrimeInt(10000),
                                    forflatplainlists := true));
   s!.circle := circle;
+  if IsBound(s!.corngen) then
+      s!.corngen := s!.corngen + 1;
+  else
+      s!.corngen := 1;
+  fi;
   if mode = "default" then
       modebool := true;
   elif mode = "sunflowershappy" then
@@ -547,6 +552,7 @@ ImportExceptions := function(s,r)
   s!.cornval := ShallowCopy(r.cornval);
   s!.cornindex := ShallowCopy(r.cornindex);
   s!.cornhash := StructuralCopy(r.cornhash);
+  s!.corngen := s!.corngen + 1;
   Unbind(s!.sunflowers);
   Unbind(s!.poppies);
 end;
@@ -838,7 +844,7 @@ function(s)
                               Add(s!.poppies,poppy);
                               found := true;
                               if Length(s!.poppies) mod 1000 = 0 then
-                                  Print(".\c");
+                                  Print("*\c");
                               fi;
                               if Length(s!.poppies) > flowerlimit then
                                   Info(InfoTom,1,"Poppy: hit flower limit, ",
@@ -1109,7 +1115,10 @@ CollectFlowers := function(s,poppies,sunflowers)
       ComputeSunflowerCorners(s,f);
   od;
 
-  if not IsBound(s!.allpoppies) then s!.allpoppies := EmptyPlist(1000); fi;
+  if not IsBound(s!.allpoppies) then 
+      s!.allpoppies := EmptyPlist(1000); 
+      s!.collgen := s!.corngen;
+  fi;
   Append(s!.allpoppies,poppies);
   if Length(s!.allpoppies) > 0 then
       Sort(s!.allpoppies);
@@ -1147,14 +1156,17 @@ end;
 #$$$ This function recomputes the corner numbers and curvature values
 # for the given lists of flowers. Note that this can add exceptional
 # corners in s.
-RecomputeFlowerCurvature := function(s,poppies,sunflowers)
-  # Changes lists poppies and sunflowers
-  local c,corns,cornval,f,h,i,j;
+RecomputeFlowerCurvature := function(s)
+  # Changes lists allpoppies and allsunflowers
+  local c,corns,cornval,f,h,i,j,poppies,sunflowers,newcorns;
   h := s!.halfedges;
   cornval := s!.cornval;
+  poppies := s!.allpoppies;
+  sunflowers := s!.allsunflowers;
+  newcorns := s!.collgen < s!.corngen;
   for i in [1..Length(poppies)] do
       f := poppies[i];
-      ComputePoppyCorners(s,f);
+      if newcorns then ComputePoppyCorners(s,f); fi;
       corns := f.corns;
       c := s!.circle-s!.circle*Length(corns)/2;
       for j in [1..Length(corns)] do
@@ -1165,7 +1177,7 @@ RecomputeFlowerCurvature := function(s,poppies,sunflowers)
   od;
   for i in [1..Length(sunflowers)] do
       f := sunflowers[i];
-      ComputeSunflowerCorners(s,f);
+      if newcorns then ComputeSunflowerCorners(s,f); fi;
       corns := f.corns;
       c := s!.circle;
       for j in [1..Length(corns)] do
@@ -1174,6 +1186,7 @@ RecomputeFlowerCurvature := function(s,poppies,sunflowers)
       # for testing: if f.curv <> c then Error(2); fi;
       f.curv := c;
   od;
+  s!.collgen := s!.corngen;
 end;
 
 #$$$ Idea: Take the poppies and sunflowers, compute a gradient and then
@@ -1241,7 +1254,7 @@ GradientApproximateGoodOfficer := function(s,steps,timeout,Y,dY)
       if best = 0 then
           Info(InfoTom,1,"No correction made it better, giving up.");
           ImportExceptions(s,backup);
-          RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+          RecomputeFlowerCurvature(s);
           return;
       fi;
       Info(InfoTom,1,"Used factor ",factors[best]);
@@ -1251,7 +1264,7 @@ GradientApproximateGoodOfficer := function(s,steps,timeout,Y,dY)
       RemoveForbiddenSunflowers(s);
       Poppy(s);
       RemoveForbiddenPoppies(s);
-      RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+      RecomputeFlowerCurvature(s);
       CollectFlowers(s,s!.poppies,s!.sunflowers);
   od;
   Info(InfoTom,1,"No success, giving up after ",steps," steps.");
@@ -1267,12 +1280,12 @@ GradStep := function(s,Y,dY)
   norm := -badnessa/Sum(grad,x->x^2);
 
   ApplyGradient(s,grad,norm);
-  RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+  RecomputeFlowerCurvature(s);
   badnessb := Badness(s!.allpoppies,s!.allsunflowers,Y);
   b := ExportExceptions(s);
 
   ApplyGradient(s,grad,norm);
-  RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+  RecomputeFlowerCurvature(s);
   badnessc := Badness(s!.allpoppies,s!.allsunflowers,Y);
   c := ExportExceptions(s);
 
@@ -1280,7 +1293,7 @@ GradStep := function(s,Y,dY)
       dist := AbsInt(badnessa-badnessb) +AbsInt(badnessc-badnessb);
       dist2 := Maximum(List([1..Length(a.cornval)],
                             i->AbsInt(a.cornval[i]-b.cornval[i])));
-      Info(InfoTom,1,"a=",badnessa," b=",badnessb," c=",badnessc," dist=",
+      Info(InfoTom,2,"a=",badnessa," b=",badnessb," c=",badnessc," dist=",
            dist," dist2=",dist2);
       if dist < 1000 or 20*dist < badnessb or dist2 < 100 or
          badnessb = 0 then break; fi;
@@ -1291,7 +1304,7 @@ GradStep := function(s,Y,dY)
           c := StructuralCopy(c);
           c.cornval := 2*b.cornval - a.cornval;
           ImportExceptions(s,c);
-          RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+          RecomputeFlowerCurvature(s);
           badnessc := Badness(s!.allpoppies,s!.allsunflowers,Y);
       elif badnessc > badnessb and badnessb > badnessa then
           # drop c, step over a
@@ -1300,7 +1313,7 @@ GradStep := function(s,Y,dY)
           a := StructuralCopy(a);
           a.cornval := 2*b.cornval - c.cornval;
           ImportExceptions(s,a);
-          RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+          RecomputeFlowerCurvature(s);
           badnessa := Badness(s!.allpoppies,s!.allsunflowers,Y);
       # now: badnessc >= badnessb and badnessb <= badnessa
       elif badnessc >= badnessa then
@@ -1310,7 +1323,7 @@ GradStep := function(s,Y,dY)
           b.cornval := List([1..Length(b.cornval)],
                             i->QuoInt(a.cornval[i]+c.cornval[i],2));
           ImportExceptions(s,b);
-          RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+          RecomputeFlowerCurvature(s);
           badnessb := Badness(s!.allpoppies,s!.allsunflowers,Y);
       else   # badnessc <= badnessa
           # drop a, go between b and c
@@ -1319,12 +1332,12 @@ GradStep := function(s,Y,dY)
           b.cornval := List([1..Length(b.cornval)],
                             i->QuoInt(a.cornval[i]+c.cornval[i],2));
           ImportExceptions(s,b);
-          RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+          RecomputeFlowerCurvature(s);
           badnessb := Badness(s!.allpoppies,s!.allsunflowers,Y);
       fi;
   od;
   ImportExceptions(s,b);
-  RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+  RecomputeFlowerCurvature(s);
   return badnessb;
 end;
 
@@ -1428,7 +1441,7 @@ DoLP := function(s,withopt)
           for j in [i+1..i+Length(s!.cornval)] do
               AddCornerException(s,j-i,Int(lines[j]));
           od;
-          RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+          RecomputeFlowerCurvature(s);
           IO_unlink(prob);
           return true;
       fi;
@@ -1472,7 +1485,7 @@ StartupTom := function(s)
     RemoveForbiddenPoppies(s);
     CollectFlowers(s,s!.poppies,[]);
     InitCornerData(s,360360,"default");
-    RecomputeFlowerCurvature(s,s!.allpoppies,s!.allsunflowers);
+    RecomputeFlowerCurvature(s);
     Poppy(s);
     RemoveForbiddenPoppies(s);
     Sunflower(s);
@@ -1480,6 +1493,42 @@ StartupTom := function(s)
     CollectFlowers(s,s!.poppies,s!.sunflowers);
 end;
 
+AnalyseTom := function(s)
+  local badness,oldbadness,starttime,step,timeout;
+  if IsBound(s!.poppies) and IsBound(s!.sunflowers) and
+     Length(s!.poppies) + Length(s!.sunflowers) = 0 then
+      Info(InfoTom,1,"Nothing to do, no poppies or sunflowers!");
+      return true;
+  fi;
+  step := 1;
+  starttime := Runtime();
+  timeout := ValueOption("TomTimeout");
+  while Length(s!.allpoppies) + Length(s!.allsunflowers) < 100000 do
+      if timeout <> fail and Runtime()-starttime > timeout * 1000 then
+          Info(InfoTom,1,"Timeout reached, giving up...");
+          return fail;
+      fi;
+      Info(InfoTom,1,"AnalyseTom: step=",step);
+      badness := 10^20;
+      repeat
+          oldbadness := badness;
+          badness := GradStep(s,Yideps,dYideps);
+      until badness = 0 or badness + QuoInt(badness,20) > oldbadness;
+      Poppy(s : PoppyLimit := 5000);
+      Sunflower(s : SunflowerLimit := 1000);
+      if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
+          Info(InfoTom,1,"Success! No more poppies and sunflowers!");
+          return true;
+      fi;
+      CollectFlowers(s,s!.poppies,s!.sunflowers);
+      step := step + 1;
+  od;
+  return fail;
+end;
+
+# Idea: Run GradStep until badness does no longer improve
+#       then either try LP to show impossible
+#       or Poppy and Sunflower
 OneRelatorQuotientOfModularGroupForTom := function(n)
   local invtab,l,ll,pongo,rels;
   pongo := CayleyPongo([[1,2,3],[2,3,1],[3,1,2]],1);
