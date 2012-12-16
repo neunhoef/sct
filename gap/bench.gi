@@ -411,6 +411,7 @@ TryTomPart2 := function(i)
   SetElementNames(invtab,"T");
 
   for j in [1..Length(SCTbench[i])] do
+      Info(InfoTom,1,"Running Tom on benchmark group ",i,",",j);
       r := SCTbench[i][j];
       s := MakeTomProblem(pongo,invtab,r.rels,[]);
       StartupTom(s:PoppyLimit := 5000, SunflowerLimit := 1000);

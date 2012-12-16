@@ -702,8 +702,8 @@ function(r)
                   od;
                   if Runtime()-starttime > timeout or 
                      Length(r!.sunflowers) > flowerlimit then
-                      Info(InfoTom,1,"Sunflower: Giving up, have ",
-                           Length(r!.sunflowers)," sunflowers.");
+                      Info(InfoTom,1,"Sunflower: limit reached, have ",
+                           Length(r!.sunflowers)," sunflowers, giving up.");
                       return;
                   fi;
               fi;
