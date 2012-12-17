@@ -494,6 +494,8 @@ AddCornerException := function(s,p,c)
   # p=[e1,e2] can either already be an exception or not.
   # if p is an integer, it is a corner number
   local pos;
+  if c < 0 then c := 0;
+  elif c > s!.circle/2 then c := s!.circle/2; fi;
   if IsInt(p) then
     s!.cornval[p] := c;
   else
@@ -555,6 +557,28 @@ ImportExceptions := function(s,r)
   s!.corngen := s!.corngen + 1;
   Unbind(s!.sunflowers);
   Unbind(s!.poppies);
+end;
+
+CleanCornerValues := function(l,circle)
+  local i;
+  circle := circle/2;
+  for i in [1..Length(l)] do
+      if l[i] < 0 then l[i] := 0;
+      elif l[i] > circle then l[i] := circle; fi;
+  od;
+end;
+
+#$$$ This function changes the gradient such that adding a negative multiple
+# of it does not violate the boundary conditions 0 < c < circle/2 for any
+# corner value.
+CleanGradient := function(s,grad)
+  local i,cornval,circle2;
+  cornval := s!.cornval;
+  circle2 := s!.circle/2;
+  for i in [1..Length(grad)] do
+      if cornval[i] = 0 and grad[i] > 0 then grad[i] := 0; 
+      elif cornval[i] = circle2 and grad[i] < 0 then grad[i] := 0; fi;
+  od;
 end;
 
 InstallMethod( Sunflower, "for a tom problem",
@@ -1275,6 +1299,7 @@ end;
 GradStep := function(s,Y,dY)
   local a,b,badnessa,badnessb,badnessc,c,grad,norm,dist,dist2;
   grad := FindGradient(s,s!.allpoppies,s!.allsunflowers,dY);
+  CleanGradient(s,grad);
   badnessa := Badness(s!.allpoppies,s!.allsunflowers,Y);
   a := ExportExceptions(s);
   norm := -badnessa/Sum(grad,x->x^2);
@@ -1303,6 +1328,7 @@ GradStep := function(s,Y,dY)
           b := c; badnessb := badnessc;
           c := StructuralCopy(c);
           c.cornval := 2*b.cornval - a.cornval;
+          CleanCornerValues(c.cornval,s!.circle);
           ImportExceptions(s,c);
           RecomputeFlowerCurvature(s);
           badnessc := Badness(s!.allpoppies,s!.allsunflowers,Y);
@@ -1312,6 +1338,7 @@ GradStep := function(s,Y,dY)
           b := a; badnessb := badnessa;
           a := StructuralCopy(a);
           a.cornval := 2*b.cornval - c.cornval;
+          CleanCornerValues(c.cornval,s!.circle);
           ImportExceptions(s,a);
           RecomputeFlowerCurvature(s);
           badnessa := Badness(s!.allpoppies,s!.allsunflowers,Y);
