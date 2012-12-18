@@ -229,6 +229,7 @@ PrettyPrintBench2 := function()
   Print("=========================\n");
   Print("Len|  1|  2|  3|  4|  5|  6|  7|  8|  9| 10| 11| 12| 13| 14| 15\n");
   Print("---|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL\n");
+  Print("---------------------------------------------------------------\n");
   for i in [1..Length(bench)] do
       if IsBound(bench[i]) then
           Print(String(i,3));
@@ -246,7 +247,7 @@ PrettyPrintBench2 := function()
                   if r.tom = true or r.tom = "ItGrad" then
                       Print("T");
                   else 
-                      Print("t"); 
+                      Print("-"); 
                   fi;
               else
                   Print("?");

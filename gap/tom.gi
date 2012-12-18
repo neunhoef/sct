@@ -1545,6 +1545,10 @@ AnalyseTom := function(s)
       Sunflower(s : SunflowerLimit := 1000);
       if Length(s!.poppies) + Length(s!.sunflowers) = 0 then
           Info(InfoTom,1,"Success! No more poppies and sunflowers!");
+          if Minimum(s!.cornval) < 0 or Maximum(s!.cornval) > s!.circle/2 then
+              Error("Illegal corner values!");
+              return fail;
+          fi;
           return true;
       fi;
       CollectFlowers(s,s!.poppies,s!.sunflowers);

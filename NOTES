@@ -1,35 +1,40 @@
 Who does what currently:
 
-schur_0 : Tom2_19 with limit 1h
-schur_1 : top
-schur_2 : Tom2_18 with limit 1h
-schur_3 : Tom2_17 with limit 1h
+gapL -m 1500m
+TryTomPart2(:TomTimeout := 3600); quit;
+
+Started at 9:00 on 17.12.2012
+
+schur_0 : top
+schur_1 : Corrected tom2 25 with 1h timeout
+schur_2 : Corrected tom2 26 with 1h timeout
+schur_3 : Corrected tom2 27 with 1h timeout
 
 ladybank00_0 : top
-ladybank00_1 : Tom2_20 with limit 1h
-ladybank00_2 : Tom2_21 with limit 1h
-ladybank00_3 : Tom2_22 with limit 1h
-ladybank00_4 : Tom2_23 with limit 1h
-ladybank00_5 : Tom26 limited to 20000 flowers
-ladybank00_6 : Tom2_24 with limit 1h
+ladybank00_1 : Corrected tom2 28 with 1h timeout
+ladybank00_2 : Corrected tom2 29 with 1h timeout
+ladybank00_3 : Corrected tom2 30 with 1h timeout
+ladybank00_4 : Corrected tom2 31 with 1h timeout
+ladybank00_5 : Corrected tom2 32 with 1h timeout
+ladybank00_6 : Corrected tom2 33 with 1h timeout
 
-ladybank01_0 : Tom2_25 with limit 1h
-ladybank01_1 : Tom2_26 with limit 1h
-ladybank01_2 : Tom2_27 with limit 1h
-ladybank01_3 : Tom2_28 with limit 1h
-ladybank01_4 : top
-ladybank01_5 : Tom2_29 with limit 1h
-ladybank01_6 : Tom2_30 with limit 1h
-ladybank01_7 : Tom2_31 with limit 1h
-ladybank01_8 : Tom2_32 with limit 1h
-ladybank01_9 : Tom2_33 with limit 1h
-ladybank01_10 : Tom2_34 with limit 1h
-ladybank01_11 : Tom2_35 with limit 1h
-ladybank01_12 : Tom2_36 with limit 1h
-ladybank01_13 : Tom2_37 with limit 1h
-ladybank01_14 : Tom2_38 with limit 1h
-ladybank01_15 : Tom2_39 with limit 1h
-
+ladybank01_0 : Corrected tom2 34 with 1h timeout
+ladybank01_1 : Corrected tom2 35 with 1h timeout
+ladybank01_2 : Corrected tom2 36 with 1h timeout
+ladybank01_3 : Corrected tom2 37 with 1h timeout
+ladybank01_4 : Corrected tom2 38 with 1h timeout
+ladybank01_5 : Corrected tom2 39 with 1h timeout
+ladybank01_6 : Corrected tom2 40 with 1h timeout
+ladybank01_7 : Corrected tom2 41 with 1h timeout
+ladybank01_8 : Corrected tom2 42 with 1h timeout
+ladybank01_9 : Corrected tom2 43 with 1h timeout
+ladybank01_10 : Corrected tom2 44 with 1h timeout
+ladybank01_11 : Corrected tom2 45 with 1h timeout
+ladybank01_12 : Corrected tom2 46 with 1h timeout
+ladybank01_13 : Corrected tom2 47 with 1h timeout
+ladybank01_14 : Corrected tom2 48 with 1h timeout
+ladybank01_15 : Corrected tom2 49 with 1h timeout
+ladybank01_16 : Corrected tom2 50 with 1h timeout
 
 Tried FIN/INF 1800:
   29 30
