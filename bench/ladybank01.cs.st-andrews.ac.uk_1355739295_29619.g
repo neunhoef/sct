@@ -1,0 +1,14 @@
+SCTbench[46][1].tom:=true;
+SCTbench[46][2].tom:=true;
+SCTbench[46][3].tom:=true;
+SCTbench[46][5].tom:=true;
+SCTbench[46][6].tom:=true;
+SCTbench[46][7].tom:=true;
+SCTbench[46][8].tom:=true;
+SCTbench[46][9].tom:=true;
+SCTbench[46][10].tom:=true;
+SCTbench[46][11].tom:=true;
+SCTbench[46][12].tom:=true;
+SCTbench[46][13].tom:=true;
+SCTbench[46][14].tom:=true;
+SCTbench[46][15].tom:=true;
