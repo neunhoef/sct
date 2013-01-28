@@ -6,35 +6,35 @@ TryTomPart2(:TomTimeout := 3600); quit;
 Started at 9:00 on 17.12.2012
 
 schur_0 : top
-schur_1 : Corrected tom2 25 with 1h timeout
-schur_2 : Corrected tom2 26 with 1h timeout
-schur_3 : Corrected tom2 27 with 1h timeout
+schur_1 :
+schur_2 :
+schur_3 :
 
 ladybank00_0 : top
-ladybank00_1 : Corrected tom2 28 with 1h timeout
-ladybank00_2 : Corrected tom2 29 with 1h timeout
-ladybank00_3 : Corrected tom2 30 with 1h timeout
-ladybank00_4 : Corrected tom2 31 with 1h timeout
-ladybank00_5 : Corrected tom2 32 with 1h timeout
-ladybank00_6 : Corrected tom2 33 with 1h timeout
+ladybank00_1 :
+ladybank00_2 :
+ladybank00_3 :
+ladybank00_4 :
+ladybank00_5 :
+ladybank00_6 :
 
-ladybank01_0 : Corrected tom2 34 with 1h timeout
-ladybank01_1 : Corrected tom2 35 with 1h timeout
-ladybank01_2 : Corrected tom2 36 with 1h timeout
-ladybank01_3 : Corrected tom2 37 with 1h timeout
-ladybank01_4 : Corrected tom2 38 with 1h timeout
-ladybank01_5 : Corrected tom2 39 with 1h timeout
-ladybank01_6 : Corrected tom2 40 with 1h timeout
-ladybank01_7 : Corrected tom2 41 with 1h timeout
-ladybank01_8 : Corrected tom2 42 with 1h timeout
-ladybank01_9 : Corrected tom2 43 with 1h timeout
-ladybank01_10 : Corrected tom2 44 with 1h timeout
-ladybank01_11 : Corrected tom2 45 with 1h timeout
-ladybank01_12 : Corrected tom2 46 with 1h timeout
-ladybank01_13 : Corrected tom2 47 with 1h timeout
-ladybank01_14 : Corrected tom2 48 with 1h timeout
-ladybank01_15 : Corrected tom2 49 with 1h timeout
-ladybank01_16 : Corrected tom2 50 with 1h timeout
+ladybank01_0 :
+ladybank01_1 :
+ladybank01_2 :
+ladybank01_3 :
+ladybank01_4 :
+ladybank01_5 :
+ladybank01_6 :
+ladybank01_7 :
+ladybank01_8 :
+ladybank01_9 :
+ladybank01_10 :
+ladybank01_11 :
+ladybank01_12 :
+ladybank01_13 :
+ladybank01_14 :
+ladybank01_15 :
+ladybank01_16 :
 
 Tried FIN/INF 1800:
   29 30
@@ -47,3 +47,6 @@ Tried LEA:
 
 Tried TOM2 with limit 1h:
   17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
+
+Tried corrected TOM2 with limit 1h:
+  25-50
