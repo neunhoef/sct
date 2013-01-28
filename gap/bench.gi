@@ -363,7 +363,9 @@ end;
 AddTryLIGrp := function(bench,i,j)
   local r,t,x;
   r := bench[i][j];
-  if not(IsBound(r.LI)) then
+  if not(IsBound(r.LI)) and not(IsBound(r.size)) then
+      # If group is known to be finite, we do not have to try to prove
+      # it to be infinite.
       t := Runtime();
       x := TryLIOnly(r.id,40,40,infinity);
       t := Runtime() - t;
