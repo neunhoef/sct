@@ -323,15 +323,15 @@ TryTCOnce := function(n)
   fi;
 end;
 
-TryLI := function(n)
+TryLIOnly := function(n,lowstart,step,limit)
   local ab,g,h,it,lowindex,oldlowindex;
   g := OneRelatorQuotientOfModularGroupWithFree(n);
-  lowindex := 5;
+  lowindex := lowstart;
   oldlowindex := 1;
   ab := AbelianInvariants(g[3]);
   if 0 in ab then return true; fi;
-  while true do
-      #Print("Running Low Index, limit=",lowindex,"...\n");
+  while lowindex <= limit do
+      Print("Running Low Index, limit=",lowindex,"...\n");
       it := LowIndexSubgroupsFpGroupIterator(g[3],lowindex);
       for h in it do
           if Index(g[3],h) > oldlowindex then
@@ -340,9 +340,12 @@ TryLI := function(n)
           fi;
       od;
       oldlowindex := lowindex;
-      lowindex := lowindex + 5;
+      lowindex := lowindex + step;
   od;
+  return fail;
 end;
+
+TryLI := function(n) return TryLIOnly(n,20,5,infinity); end;
 
 Try := function(n,timeout)
   local res;
@@ -354,6 +357,19 @@ Try := function(n,timeout)
       return res[2];
   else
       return fail;
+  fi;
+end;
+
+AddTryLIGrp := function(bench,i,j)
+  local r,t,x;
+  r := bench[i][j];
+  if not(IsBound(r.LI)) then
+      t := Runtime();
+      x := TryLIOnly(r.id,40,40,infinity);
+      t := Runtime() - t;
+      if x = "infinite" then
+          AddBenchData(i,j,"LI",t);
+      fi;
   fi;
 end;
 
