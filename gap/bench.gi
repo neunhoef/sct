@@ -369,6 +369,7 @@ AddTryLIGrp := function(bench,i,j)
       t := Runtime() - t;
       if x = "infinite" then
           AddBenchData(i,j,"LI",t);
+          SaveBenchData();
       fi;
   fi;
 end;
