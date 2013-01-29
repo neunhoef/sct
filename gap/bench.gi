@@ -238,7 +238,7 @@ PrettyPrintBench2 := function()
               Print("|");
               if IsBound(r.size) then
                   Print("F");
-              elif IsBound(r.infinite) then
+              elif IsBound(r.infinite) or IsBound(r.LI) then
                   Print("I");
               else
                   Print("?");
