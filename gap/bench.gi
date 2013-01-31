@@ -265,6 +265,79 @@ PrettyPrintBench2 := function()
   Print("\n");
 end;
 
+PrettyPrintBench3 := function()
+  local bench,i,j,r;
+  bench := SCTbench;
+  Print("=========================\n");
+  Print(" Benchmark suite for SCT\n");
+  Print("=========================\n");
+  Print("Len|  1|  2|  3|  4|  5|  6|  7|  8|  9| 10| 11| 12| 13| 14| 15\n");
+  Print("---|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL|FTL\n");
+  Print("---|#  |#  |#  |#  |#  |#  |#  |#  |#  |#  |#  |#  |#  |#  |#  \n");
+  Print("---------------------------------------------------------------\n");
+  for i in [1..Length(bench)] do
+      if IsBound(bench[i]) then
+          Print(String(i,3));
+          for j in [1..Length(bench[i])] do
+              r := bench[i][j];
+              Print("|");
+              if IsBound(r.TC) then
+                  Print("F");
+              elif IsBound(r.LI) then
+                  Print("I");
+              else
+                  Print(" ");
+              fi;
+              if IsBound(r.tom) then
+                  if r.tom = true or r.tom = "ItGrad" then
+                      Print("T");
+                  else 
+                      Print("-"); 
+                  fi;
+              else
+                  Print("?");
+              fi;
+              if IsBound(r.lea) then
+                  if r.lea then Print("L");
+                           else Print("l"); fi;
+              else
+                  Print("?");
+              fi;
+          od;
+          Print("\n");
+          Print("   ");
+          for j in [1..Length(bench[i])] do
+              Print("|");
+              r := bench[i][j];
+              if IsBound(r.TC) then
+                  if r.TC.maxcosets < 10 then Print("1");
+                  elif r.TC.maxcosets < 1000 then Print("2");
+                  elif r.TC.maxcosets < 1000 then Print("3");
+                  elif r.TC.maxcosets < 10000 then Print("4");
+                  elif r.TC.maxcosets < 100000 then Print("5");
+                  elif r.TC.maxcosets < 1000000 then Print("6");
+                  elif r.TC.maxcosets < 10000000 then Print("7");
+                  elif r.TC.maxcosets < 100000000 then Print("8");
+                  else Print("9"); fi;
+              elif IsBound(r.LI) then
+                  if r.LI < 1000 then Print("1");
+                  elif r.LI < 10000 then Print("2");
+                  elif r.LI < 100000 then Print("3");
+                  elif r.LI < 1000000 then Print("4");
+                  elif r.LI < 10000000 then Print("5");
+                  elif r.LI < 100000000 then Print("6");
+                  else Print("9"); fi;
+              else
+                  Print(" ");
+              fi;
+              Print("  ");
+          od;
+          Print("\n");
+      fi;
+  od;
+  Print("\n");
+end;
+
 OneRelatorQuotientOfModularGroupWithFree := function(n)
   local S,T,f,l,rels;
   f := FreeGroup("S","T");
@@ -371,6 +444,23 @@ AddTryLIGrp := function(bench,i,j)
       t := Runtime() - t;
       if x = "infinite" then
           AddBenchData(i,j,"LI",t);
+          SaveBenchData();
+      fi;
+  fi;
+end;
+
+AddTryTCGrp := function(bench,i,j)
+  local ct,g,gens,r,time,workspace;
+  r := bench[i][j];
+  if not(IsBound(r.TC)) and not(IsBound(r.LI)) and not(IsBound(r.infinite)) then
+      g := OneRelatorQuotientOfModularGroupWithFree(r.id);
+      workspace := 500000000;   # 2GB
+      time := 900;  # 15 minutes
+      gens := GeneratorsOfGroup(g[1]);
+      ct := ACEStats(gens,g[2],gens{[1]}:
+                     time := time, workspace := workspace, felsch := true);
+      if ct.index <> 0 then 
+          AddBenchData(i,j,"TC",ct);
           SaveBenchData();
       fi;
   fi;
